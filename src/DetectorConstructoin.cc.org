@@ -1,0 +1,1633 @@
+#include "DetectorConstruction.hh"
+#include "DetectorMessenger.hh"
+
+#include "G4Material.hh"
+#include "G4Box.hh"
+#include "G4Tubs.hh"
+#include "G4Torus.hh"
+#include "G4Sphere.hh"
+#include "G4LogicalVolume.hh"
+#include "G4PVPlacement.hh"
+#include "G4PVReplica.hh"
+#include "G4UniformMagField.hh"
+
+#include "G4GeometryManager.hh"
+#include "G4PhysicalVolumeStore.hh"
+#include "G4LogicalVolumeStore.hh"
+#include "G4SolidStore.hh"
+
+#include "G4VisAttributes.hh"
+#include "G4Colour.hh"
+
+#include "G4UserLimits.hh"//To apply steplength upper limit hiromi
+#include "BodySD.hh"//To apply sensitive body hiromi
+#include "G4SDManager.hh"//To apply sensitive body hiromi
+
+#include "G4ClassicalRK4.hh"
+
+#include "MagneticField.hh"
+#include "TMath.h"
+
+
+DetectorConstruction::DetectorConstruction()
+:defaultMaterial(0),
+ magField(0), mymagField(0)
+{
+  
+  // materials
+  DefineMaterials();
+
+  // ensure the global field is initialized
+  (void)MagneticField::getObject();
+
+  // create commands for interactive definition of the calorimeter
+  detectorMessenger = new DetectorMessenger(this);
+}
+
+
+DetectorConstruction::~DetectorConstruction()
+{ delete detectorMessenger;}
+
+
+G4VPhysicalVolume* DetectorConstruction::Construct()
+{
+  return ConstructCalorimeter();
+}
+
+
+void DetectorConstruction::DefineMaterials()
+{ 
+ //This function illustrates the possible ways to define materials
+ 
+G4String symbol;             //a=mass of a mole;
+G4double a, z, density;      //z=mean number of protons;  
+G4int iz, n;                 //iz=number of protons  in an isotope; 
+                             // n=number of nucleons in an isotope;
+
+G4int ncomponents, natoms;
+G4double abundance, fractionmass;
+
+//
+// define Elements
+//
+
+G4Element* H  = new G4Element("Hydrogen",symbol="H" , z= 1., a= 1.01*g/mole);
+G4Element* C  = new G4Element("Carbon"  ,symbol="C" , z= 6., a= 12.01*g/mole);
+G4Element* N  = new G4Element("Nitrogen",symbol="N" , z= 7., a= 14.01*g/mole);
+G4Element* O  = new G4Element("Oxygen"  ,symbol="O" , z= 8., a= 16.00*g/mole);
+G4Element* Si = new G4Element("Silicon" ,symbol="Si", z= 14., a= 28.09*g/mole);
+G4Element* Pb = new G4Element("Lead"    ,symbol="Pb", z=82., a= 207.19*g/mole);
+G4Element* W  = new G4Element("Tangstate",symbol="W", z=74., a= 183.84*g/mole);
+//G4Element* S  = new G4Element("Tangstate",symbol="S", z=16., a= 183.84*g/mole);
+
+//
+// define an Element from isotopes, by relative abundance 
+//
+
+G4Isotope* U5 = new G4Isotope("U235", iz=92, n=235, a=235.01*g/mole);
+G4Isotope* U8 = new G4Isotope("U238", iz=92, n=238, a=238.03*g/mole);
+
+G4Element* U  = new G4Element("enriched Uranium",symbol="U",ncomponents=2);
+U->AddIsotope(U5, abundance= 90.*perCent);
+U->AddIsotope(U8, abundance= 10.*perCent);
+
+//
+// define simple materials
+//
+
+G4Material* Al = new G4Material("Aluminium", z=13., a=26.98*g/mole, density=2.699*g/cm3);
+G4Material* LAr = new G4Material("liquidArgon", z=18., a= 39.95*g/mole, density= 1.390*g/cm3);
+//G4Material* PurePb = new G4Material("Lead", z=82., a= 207.19*g/mole, density= 11.35*g/cm3);
+G4Material* Fe = new G4Material("Fe", z= 26., a= 55.83*g/mole, density = 7.874*g/cm3);
+//Fe;7874 kg/m3, 7.09E-6 m3/mol
+G4Material* PureSi = new G4Material("Si", z= 14., a= 28.09*g/mole, density = 2.33*g/cm3);
+
+//G4Material* W = new G4Material("Tangstate", z=74., a= 183.84*g/mole, density= 19.3*g/cm3);
+G4Material* ArgonGas= new G4Material("ArgonGas", z=18., a= 39.95*g/mole, density= (1.66*1E-3)*g/cm3);
+
+//
+// define a material from elements.   case 1: chemical molecule
+//
+
+
+G4Material* H2O = 
+new G4Material("Water", density= 1.000*g/cm3, ncomponents=2);
+H2O->AddElement(H, natoms=2);
+H2O->AddElement(O, natoms=1);
+// overwrite computed meanExcitationEnergy with ICRU recommended value 
+H2O->GetIonisation()->SetMeanExcitationEnergy(75.0*eV);
+
+G4Material* Sci = 
+new G4Material("Scintillator", density= 1.032*g/cm3, ncomponents=2);
+Sci->AddElement(C, natoms=9);
+Sci->AddElement(H, natoms=10);
+
+G4Material* PbWO4 = 
+new G4Material("LeadTungsten", density= 8.28*g/cm3, ncomponents=3);
+PbWO4->AddElement(Pb, natoms=1);
+PbWO4->AddElement(W, natoms=1);
+PbWO4->AddElement(O, natoms=4);
+
+G4Material* CH4 = 
+new G4Material("Ethane", density= (1.263*1E-3)*g/cm3, ncomponents=2);
+CH4->AddElement(C, natoms=2);
+CH4->AddElement(H, natoms=6);
+
+G4Material* TPCGAS = 
+new G4Material("TPCGAS", density= (1.58*1E-3)*g/cm3, ncomponents=2);
+TPCGAS->AddMaterial(ArgonGas, fractionmass=10*perCent);
+TPCGAS->AddMaterial(CH4, fractionmass=90*perCent);
+
+G4Material* Dyneema =//TOYOBO http://www.toyobo.co.jp/seihin/dn/dyneema/meigara/index.htm 
+new G4Material("Dyneema", density= (0.97)*g/cm3, ncomponents=2);
+Dyneema->AddElement(C, natoms=2);
+Dyneema->AddElement(H, natoms=4);
+
+G4Material* PSF =//Poly Sulfone http://www.kda1969.com/pla_material/pla_mate_psf2.htm 
+new G4Material("PSF", density= (1.2)*g/cm3, ncomponents=3);
+PSF->AddElement(C, natoms=27);
+PSF->AddElement(H, natoms=38);
+PSF->AddElement(O, natoms=4);
+//PSF->AddElement(S, natoms=1);
+
+G4Material* Fiber = 
+new G4Material("ScintillatingFiber", density= 1.056*g/cm3, ncomponents=2);
+Fiber->AddElement(C, natoms=6);
+Fiber->AddElement(H, natoms=5);
+
+G4Material* Myl = 
+new G4Material("Mylar", density= 1.397*g/cm3, ncomponents=3);
+Myl->AddElement(C, natoms=10);
+Myl->AddElement(H, natoms= 8);
+Myl->AddElement(O, natoms= 4);
+
+G4Material* SiO2 = 
+new G4Material("quartz",density= 2.200*g/cm3, ncomponents=2);
+SiO2->AddElement(Si, natoms=1);
+SiO2->AddElement(O , natoms=2);
+
+G4Material* Polycarbonate = 
+new G4Material("Lexan",density= 1.200*g/cm3, ncomponents=3);
+Polycarbonate->AddElement(C, natoms=16);
+Polycarbonate->AddElement(H , natoms=14);
+Polycarbonate->AddElement(O , natoms=3);
+
+G4Material* Polymethylmethacrylate = 
+new G4Material("acrylic",density= 1.19*g/cm3, ncomponents=3);
+Polymethylmethacrylate->AddElement(C, natoms=5);
+Polymethylmethacrylate->AddElement(H , natoms=8);
+Polymethylmethacrylate->AddElement(O , natoms=2);
+
+G4Material* LeadTangstate = 
+new G4Material("LeadTan",density= 8.300*g/cm3, ncomponents=3);
+LeadTangstate->AddElement(Pb, natoms=1);
+LeadTangstate->AddElement(W , natoms=1);
+LeadTangstate->AddElement(O , natoms=4);
+
+G4Material* Epoxy = new G4Material("Epoxy", density= 1.7*g/cm3 ,ncomponents=3);
+ Epoxy->AddElement(C, natoms=10);
+ Epoxy->AddElement(H, natoms=10);
+ Epoxy->AddElement(O, natoms= 2);
+//
+// define a material from elements.   case 2: mixture by fractional mass
+//
+
+G4Material* Air = 
+new G4Material("Air"  , density= 1.290*mg/cm3, ncomponents=2);
+Air->AddElement(N, fractionmass=0.7);
+Air->AddElement(O, fractionmass=0.3);
+
+G4Material* WPb = 
+new G4Material("WPb", density= 19.30*g/cm3, ncomponents=2);
+WPb->AddElement(W, fractionmass=99.9*perCent);
+WPb->AddElement(Pb, fractionmass=0.1*perCent);
+//
+// define a material from elements and/or others materials (mixture of mixtures)
+//
+
+G4Material* Aerog = 
+new G4Material("Aerogel", density= 0.200*g/cm3, ncomponents=3);
+Aerog->AddMaterial(SiO2, fractionmass=62.5*perCent);
+Aerog->AddMaterial(H2O , fractionmass=37.4*perCent);
+Aerog->AddElement (C   , fractionmass= 0.1*perCent);
+
+G4Material* G10_Plate = 
+  new G4Material("G10_Plate", density= 1.7*g/cm3, ncomponents=2);
+ G10_Plate->AddMaterial(SiO2, fractionmass= 60*perCent);
+ G10_Plate->AddMaterial(Epoxy, fractionmass=40*perCent);
+//
+// examples of gas in non STP conditions
+//
+
+G4Material* CO2 = 
+new G4Material("CarbonicGas", density= 27.*mg/cm3, ncomponents=2,
+                              kStateGas, 325.*kelvin, 50.*atmosphere);
+CO2->AddElement(C, natoms=1);
+CO2->AddElement(O, natoms=2);
+ 
+G4Material* steam = 
+new G4Material("WaterSteam", density= 0.3*mg/cm3, ncomponents=1,
+                             kStateGas, 500.*kelvin, 2.*atmosphere);
+steam->AddMaterial(H2O, fractionmass=1.);
+
+//
+// examples of vacuum
+//
+
+G4Material* Vacuum =
+new G4Material("Galactic", z=1., a=1.01*g/mole,density= universe_mean_density,
+                           kStateGas, 2.73*kelvin, 3.e-18*pascal);
+
+G4Material* beam = 
+new G4Material("Beam", density= 1.e-5*g/cm3, ncomponents=1,
+                       kStateGas, STP_Temperature, 2.e-2*bar);
+beam->AddMaterial(Air, fractionmass=1.);
+
+G4cout << *(G4Material::GetMaterialTable()) << G4endl;
+
+//default materials of the World
+defaultMaterial  = Vacuum;
+ sensorMat = PureSi;
+ subMat = G10_Plate;
+ tubeMat = LeadTangstate;
+//defaultMaterial1  = PurePb; 
+defaultMaterial1  = Al; 
+defaultMaterial2  = Air;
+defaultMaterial3  = WPb;
+defaultMaterial4  = PbWO4;
+defaultMaterial5  = PureSi;//Al;//Polycarbonate;
+defaultMaterial6  = LeadTangstate;
+defaultMaterial7  = Dyneema; 
+//defaultMaterial8  = PSF;
+defaultMaterial8  = Polymethylmethacrylate;
+
+//Al,Polycarbonate, Polymethylmethacrylate ,LeadTangstate
+//defaultMaterial3  = TPCGAS;
+
+//defaultMaterial5  = SiO2;
+}
+
+
+G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter()
+{
+
+  // Clean old geometry, if any
+  //
+  G4GeometryManager::GetInstance()->OpenGeometry();
+  G4PhysicalVolumeStore::GetInstance()->Clean();
+  G4LogicalVolumeStore::GetInstance()->Clean();
+  G4SolidStore::GetInstance()->Clean();
+
+  // complete the Calor parameters definition
+  ComputeCalorParameters();
+   
+  //     
+  // World
+  //
+
+  WorldSize=1.0*m;
+
+  solidWorld = new G4Box("World",				//its name
+                   WorldSize/2,WorldSize/2,WorldSize/2);	//its size
+                         
+  logicWorld = new G4LogicalVolume(solidWorld,		//its solid
+                                   defaultMaterial,	//its material
+                                   "World");		//its name
+                                   
+  physiWorld = new G4PVPlacement(0,			//no rotation
+  				 G4ThreeVector(),	//at (0,0,0)
+                                 logicWorld,		//its logical volume				 
+                                 "World",		//its name
+                                 0,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+  
+//Another box
+  solidFrame = new G4Box("Frame",
+                   WorldSize*0.95/2,WorldSize*0.95/2,WorldSize*0.95/2);
+                       
+  logicFrame = new G4LogicalVolume(solidFrame,		
+                                   defaultMaterial,	
+                                   "Frame");		
+                                   
+  physiFrame = new G4PVPlacement(0,			
+  				 G4ThreeVector(),	
+                                 logicFrame,		
+                                 "Frame",		
+                                 logicWorld,		
+                                 false,			
+                                 0);			
+
+
+  G4double pi = TMath::Pi();
+  G4int vane_num = 1;
+  G4RotationMatrix* rotvu[vane_num];
+  G4RotationMatrix* rotvd[vane_num];
+
+  G4double d_center = 96.;
+  G4double vvaneW = 240.;
+  G4double vvaneT = 1.;
+  G4double vvaneH = 350.;
+  G4double r_vane = d_center/2+vvaneW/2;
+
+  G4double sensorW = 222.;
+  G4double sensorT = 0.32;
+  G4double sensorH = 200.;
+
+  G4double subW = 240.;
+  G4double subT = 1.;
+  G4double subH = 150.;
+  G4double subW2 = 18.;
+  G4double subH2 = 200.;
+
+  //virtual vane
+  sol_vvane = new G4Box("vvane", vvaneW/2*mm, vvaneT/2*mm, vvaneH/2*mm);
+  log_vvane = new G4LogicalVolume(sol_vvane,
+				  defaultMaterial,
+				  "vvane");
+
+  for(int ii=0; ii<vane_num; ii++){
+  //for(int ii=0; ii<2; ii++){
+    rotvu[ii] = new G4RotationMatrix();
+    G4double rangle = (G4double)2.*pi/vane_num*ii;
+    rotvu[ii]->rotateZ(-rangle*rad);
+    phys_vvane = new G4PVPlacement(rotvu[ii],
+				   G4ThreeVector(r_vane*cos(rangle),
+						 r_vane*sin(rangle),
+						 vvaneH/2.),
+				   log_vvane,
+				   "vvane",
+				   logicFrame,
+				   false,
+				   ii);
+    rotvd[ii] = new G4RotationMatrix();
+
+    rotvd[ii]->rotateX(pi*rad);
+    rotvd[ii]->rotateZ(rangle*rad);
+    phys_vvane = new G4PVPlacement(rotvd[ii],
+				   G4ThreeVector(r_vane*cos(rangle),
+						 r_vane*sin(rangle),
+						 -vvaneH/2.),
+				   log_vvane,
+				   "vvane",
+				   logicFrame,
+				   false,
+				   ii+vane_num);
+    
+
+
+  }
+			
+  //sensor
+  sol_sensor = new G4Box("sensor", sensorW/2*mm, sensorT/2*mm, sensorH/2*mm);
+  log_sensor = new G4LogicalVolume(sol_sensor,
+				   sensorMat,
+				   "sensor");
+  phys_sensor = new G4PVPlacement(0,
+				  G4ThreeVector(9.*mm,0,-75.*mm),
+				 log_sensor,
+				 "sensor",
+				 log_vvane,
+				 false,
+				 0);
+				   
+  //substrate
+  sol_sub = new G4Box("sub", subW/2*mm, subT/2*mm, subH/2*mm);
+  log_sub = new G4LogicalVolume(sol_sub,
+				subMat,
+				"sub");
+  phys_sub = new G4PVPlacement(0,
+			       G4ThreeVector(0,0,100*mm),
+			       log_sub,
+			       "sub",
+			       log_vvane,
+			       false,
+			       0);
+  sol_sub2 = new G4Box("sub2", subW2/2*mm, subT/2*mm, subH2/2*mm);
+  log_sub2 = new G4LogicalVolume(sol_sub2,
+				subMat,
+				"sub2");
+  phys_sub2 = new G4PVPlacement(0,
+			       G4ThreeVector(-111.*mm,0,-75.*mm),
+			       log_sub2,
+			       "sub2",
+			       log_vvane,
+			       false,
+			       0);
+				
+  //Center tube
+  G4double tube_din = 46.;
+  G4double tube_dout = 96.;
+  G4double tubeH = 700.;
+  sol_tube = new G4Tubs("tube",tube_din/2*mm,tube_dout/2*mm,tubeH/2*mm,
+			0.*deg,360.*deg);
+  log_tube = new G4LogicalVolume(sol_tube,
+				 tubeMat,
+				 "tube");
+  phys_tube = new G4PVPlacement(0,
+				G4ThreeVector(),
+				log_tube,
+				"tube",
+				logicFrame,
+				false,
+				0);
+
+  /*
+
+//16panels
+ double outerEdge=290*mm;
+ double wide=110*mm;//130
+ double center=outerEdge-wide;//205;
+ //double dt=1;//thickness 2mm
+ //double dt=0.5;//thickness 1mm
+ //double dt=0.25;//thickness 0.5mm
+ double dt=0.15*mm;//thickness 0.30mm
+ //double dt=0.16*mm;//thickness 0.32mm
+ //double panelH=240*mm;
+// double panelH=200*mm;
+//60*120*0.32 width,height,thickness
+//4*2*1 radial 4mai axis 2mai (half up/bottom) 
+ double pi=TMath::Pi();
+
+
+ if(panelH > (WorldSizeYZ*0.95/2)) panelH=WorldSizeYZ*0.95/2;
+  panel1 = new G4Box("panel1",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                   
+                       
+  logic_panel1 = new G4LogicalVolume(panel1,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel1");		//its name
+                                   
+ 
+  G4RotationMatrix rotMatrixpanel1;  //unit rotaion matrix
+  G4double anglepanel1= (0.0*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel1.rotateZ(anglepanel1); //rot matrix
+
+  phys_panel1 = new G4PVPlacement(G4Transform3D(rotMatrixpanel1,			//rotation
+  				 G4ThreeVector(center*sin(anglepanel1)*mm,center*cos(anglepanel1)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel1,		//its logical volume				 
+                                 "panel1",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+
+  panel2 = new G4Box("panel2",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel2 = new G4LogicalVolume(panel2,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel2");		//its name
+                                  
+  G4RotationMatrix rotMatrixpanel2;  //unit rotaion matrix
+  G4double anglepanel2= (15.0*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel2.rotateZ(anglepanel2); //rot matrix
+
+  phys_panel2 = new G4PVPlacement(G4Transform3D(rotMatrixpanel2,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel2)*mm,center*cos(-1*anglepanel2)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel2,		//its logical volume				 
+                                 "panel2",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+  panel3 = new G4Box("panel3",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel3 = new G4LogicalVolume(panel3,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel3");		//its name
+                                  
+  G4RotationMatrix rotMatrixpanel3;  //unit rotaion matrix
+  G4double anglepanel3= (30.0*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel3.rotateZ(anglepanel3); //rot matrix
+  phys_panel3 = new G4PVPlacement(G4Transform3D(rotMatrixpanel3,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel3)*mm,center*cos(-1*anglepanel3)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel3,		//its logical volume				 
+                                 "panel3",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+  panel4 = new G4Box("panel4",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel4 = new G4LogicalVolume(panel4,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel4");		//its name
+                                   
+ 
+  G4RotationMatrix rotMatrixpanel4;  //unit rotaion matrix
+  G4double anglepanel4= (45.0*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel4.rotateZ(anglepanel4); //rot matrix
+  phys_panel4 = new G4PVPlacement(G4Transform3D(rotMatrixpanel4,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel4)*mm,center*cos(-1*anglepanel4)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel4,		//its logical volume				 
+                                 "panel4",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+  panel5 = new G4Box("panel5",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel5 = new G4LogicalVolume(panel5,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel5");		//its name
+                                   
+  G4RotationMatrix rotMatrixpanel5;  //unit rotaion matrix
+  //hh G4double anglepanel5= (-180.0*pi/(double)180)*rad; //rotation angle
+  G4double anglepanel5= (60.0*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel5.rotateZ(anglepanel5); //rot matrix
+  phys_panel5 = new G4PVPlacement(G4Transform3D(rotMatrixpanel5,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel5)*mm,center*cos(-1*anglepanel5)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel5,		//its logical volume				 
+                                 "panel5",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+  panel6 = new G4Box("panel6",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel6 = new G4LogicalVolume(panel6,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel6");		//its name
+                                  
+  G4RotationMatrix rotMatrixpanel6;  //unit rotaion matrix
+  G4double anglepanel6= (75*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel6.rotateZ(anglepanel6); //rot matrix
+  phys_panel6 = new G4PVPlacement(G4Transform3D(rotMatrixpanel6,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel6)*mm,center*cos(-1*anglepanel6)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel6,		//its logical volume				 
+                                 "panel6",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+  panel7 = new G4Box("panel7",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel7 = new G4LogicalVolume(panel7,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel7");		//its name
+                                   
+  G4RotationMatrix rotMatrixpanel7;  //unit rotaion matrix
+  G4double anglepanel7= (90.0*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel7.rotateZ(anglepanel7); //rot matrix
+  phys_panel7 = new G4PVPlacement(G4Transform3D(rotMatrixpanel7,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel7)*mm,center*cos(-1*anglepanel7)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel7,		//its logical volume				 
+                                 "panel7",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+  panel8 = new G4Box("panel8",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel8 = new G4LogicalVolume(panel8,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel8");		//its name
+                                  
+
+  G4RotationMatrix rotMatrixpanel8;  //unit rotaion matrix
+  G4double anglepanel8= (105.0*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel8.rotateZ(anglepanel8); //rot matrix
+  phys_panel8 = new G4PVPlacement(G4Transform3D(rotMatrixpanel8,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel8)*mm,center*cos(-1*anglepanel8)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel8,		//its logical volume				 
+                                 "panel8",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+//8panelsEND/////////////////////////////
+
+  panel1a = new G4Box("panel1a",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                   
+                       
+  logic_panel1a = new G4LogicalVolume(panel1a,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel1a");		//its name
+                                   
+ 
+  G4RotationMatrix rotMatrixpanel1a;  //unit rotaion matrix
+  G4double anglepanel1a= (120*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel1a.rotateZ(anglepanel1a); //rot matrix
+  phys_panel1a = new G4PVPlacement(G4Transform3D(rotMatrixpanel1a,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel1a)*mm,center*cos(-1*anglepanel1a)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel1a,		//its logical volume				 
+                                 "panel1a",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+
+  panel2a = new G4Box("panel2a",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel2a = new G4LogicalVolume(panel2a,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel2a");		//its name
+                                  
+  G4RotationMatrix rotMatrixpanel2a;  //unit rotaion matrix
+  G4double anglepanel2a= (135*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel2a.rotateZ(anglepanel2a); //rot matrix
+
+  phys_panel2a = new G4PVPlacement(G4Transform3D(rotMatrixpanel2a,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel2a)*mm,center*cos(-1*anglepanel2a)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel2a,		//its logical volume				 
+                                 "panel2a",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+  panel3a = new G4Box("panel3a",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel3a = new G4LogicalVolume(panel3a,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel3a");		//its name
+                                  
+  G4RotationMatrix rotMatrixpanel3a;  //unit rotaion matrix
+  G4double anglepanel3a= (150*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel3a.rotateZ(anglepanel3a); //rot matrix
+
+  phys_panel3a = new G4PVPlacement(G4Transform3D(rotMatrixpanel3a,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel3a)*mm,center*cos(-1*anglepanel3a)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel3a,		//its logical volume				 
+                                 "panel3a",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+  panel4a = new G4Box("panel4a",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel4a = new G4LogicalVolume(panel4a,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel4a");		//its name
+                                   
+ 
+  G4RotationMatrix rotMatrixpanel4a;  //unit rotaion matrix
+  G4double anglepanel4a= (165*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel4a.rotateZ(anglepanel4a); //rot matrix
+
+  phys_panel4a = new G4PVPlacement(G4Transform3D(rotMatrixpanel4a,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel4a)*mm,center*cos(-1*anglepanel4a)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel4a,		//its logical volume				 
+                                 "panel4a",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+  panel5a = new G4Box("panel5a",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel5a = new G4LogicalVolume(panel5a,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel5a");		//its name
+                                   
+  G4RotationMatrix rotMatrixpanel5a;  //unit rotaion matrix
+  G4double anglepanel5a= (180*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel5a.rotateZ(anglepanel5a); //rot matrix
+
+  phys_panel5a = new G4PVPlacement(G4Transform3D(rotMatrixpanel5a,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel5a)*mm,center*cos(-1*anglepanel5a)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel5a,		//its logical volume				 
+                                 "panel5a",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+  panel6a = new G4Box("panel6a",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel6a = new G4LogicalVolume(panel6a,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel6a");		//its name
+                                  
+  G4RotationMatrix rotMatrixpanel6a;  //unit rotaion matrix
+  G4double anglepanel6a= (195*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel6a.rotateZ(anglepanel6a); //rot matrix
+
+  phys_panel6a = new G4PVPlacement(G4Transform3D(rotMatrixpanel6a,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel6a)*mm,center*cos(-1*anglepanel6a)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel6a,		//its logical volume				 
+                                 "panel6a",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+  panel7a = new G4Box("panel7a",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel7a = new G4LogicalVolume(panel7a,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel7a");		//its name
+                                   
+  G4RotationMatrix rotMatrixpanel7a;  //unit rotaion matrix
+  G4double anglepanel7a= (210*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel7a.rotateZ(anglepanel7a); //rot matrix
+
+  phys_panel7a = new G4PVPlacement(G4Transform3D(rotMatrixpanel7a,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel7a)*mm,center*cos(-1*anglepanel7a)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel7a,		//its logical volume				 
+                                 "panel7a",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+  panel8a = new G4Box("panel8a",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel8a = new G4LogicalVolume(panel8a,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel8a");		//its name
+                                  
+
+  G4RotationMatrix rotMatrixpanel8a;  //unit rotaion matrix
+  G4double anglepanel8a= (225*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel8a.rotateZ(anglepanel8a); //rot matrix
+
+  phys_panel8a = new G4PVPlacement(G4Transform3D(rotMatrixpanel8a,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel8a)*mm,center*cos(-1*anglepanel8a)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel8a,		//its logical volume				 
+                                 "panel8a",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+//16panelsEND/////////////////////////////
+
+  panel1b = new G4Box("panel1b",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                   
+                       
+  logic_panel1b = new G4LogicalVolume(panel1b,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel1b");		//its name
+                                   
+ 
+  G4RotationMatrix rotMatrixpanel1b;  //unit rotaion matrix
+  G4double anglepanel1b= (240*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel1b.rotateZ(anglepanel1b); //rot matrix
+
+  phys_panel1b = new G4PVPlacement(G4Transform3D(rotMatrixpanel1b,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel1b)*mm,center*cos(-1*anglepanel1b)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel1b,		//its logical volume				 
+                                 "panel1b",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+
+  panel2b = new G4Box("panel2b",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel2b = new G4LogicalVolume(panel2b,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel2b");		//its name
+                                  
+  G4RotationMatrix rotMatrixpanel2b;  //unit rotaion matrix
+  G4double anglepanel2b= (255*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel2b.rotateZ(anglepanel2b); //rot matrix
+
+  phys_panel2b = new G4PVPlacement(G4Transform3D(rotMatrixpanel2b,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel2b)*mm,center*cos(-1*anglepanel2b)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel2b,		//its logical volume				 
+                                 "panel2b",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+  panel3b = new G4Box("panel3b",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel3b = new G4LogicalVolume(panel3b,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel3b");		//its name
+                                  
+  G4RotationMatrix rotMatrixpanel3b;  //unit rotaion matrix
+  G4double anglepanel3b= (270*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel3b.rotateZ(anglepanel3b); //rot matrix
+
+  phys_panel3b = new G4PVPlacement(G4Transform3D(rotMatrixpanel3b,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel3b)*mm,center*cos(-1*anglepanel3b)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel3b,		//its logical volume				 
+                                 "panel3b",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+  panel4b = new G4Box("panel4b",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel4b = new G4LogicalVolume(panel4b,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel4b");		//its name
+                                   
+ 
+  G4RotationMatrix rotMatrixpanel4b;  //unit rotaion matrix
+  G4double anglepanel4b= (285*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel4b.rotateZ(anglepanel4b); //rot matrix
+
+  phys_panel4b = new G4PVPlacement(G4Transform3D(rotMatrixpanel4b,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel4b)*mm,center*cos(-1*anglepanel4b)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel4b,		//its logical volume				 
+                                 "panel4b",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+  panel5b = new G4Box("panel5b",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel5b = new G4LogicalVolume(panel5b,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel5b");		//its name
+                                   
+  G4RotationMatrix rotMatrixpanel5b;  //unit rotaion matrix
+  G4double anglepanel5b= (300*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel5b.rotateZ(anglepanel5b); //rot matrix
+
+  phys_panel5b = new G4PVPlacement(G4Transform3D(rotMatrixpanel5b,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel5b)*mm,center*cos(-1*anglepanel5b)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel5b,		//its logical volume				 
+                                 "panel5b",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+  panel6b = new G4Box("panel6b",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel6b = new G4LogicalVolume(panel6b,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel6b");		//its name
+                                  
+  G4RotationMatrix rotMatrixpanel6b;  //unit rotaion matrix
+  G4double anglepanel6b= (315*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel6b.rotateZ(anglepanel6b); //rot matrix
+
+  phys_panel6b = new G4PVPlacement(G4Transform3D(rotMatrixpanel6b,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel6b)*mm,center*cos(-1*anglepanel6b)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel6b,		//its logical volume				 
+                                 "panel6b",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+  panel7b = new G4Box("panel7b",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel7b = new G4LogicalVolume(panel7b,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel7b");		//its name
+                                   
+  G4RotationMatrix rotMatrixpanel7b;  //unit rotaion matrix
+  G4double anglepanel7b= (330*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel7b.rotateZ(anglepanel7b); //rot matrix
+
+  phys_panel7b = new G4PVPlacement(G4Transform3D(rotMatrixpanel7b,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel7b)*mm,center*cos(-1*anglepanel7b)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel7b,		//its logical volume				 
+                                 "panel7b",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+  panel8b = new G4Box("panel8b",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel8b = new G4LogicalVolume(panel8b,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel8b");		//its name
+                                  
+
+  G4RotationMatrix rotMatrixpanel8b;  //unit rotaion matrix
+  G4double anglepanel8b= (345*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel8b.rotateZ(anglepanel8b); //rot matrix
+
+  phys_panel8b = new G4PVPlacement(G4Transform3D(rotMatrixpanel8b,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel8b)*mm,center*cos(-1*anglepanel8b)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel8b,		//its logical volume				 
+                                 "panel8b",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+//24panelsEND/////////////////////////////
+  panel1c = new G4Box("panel1c",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                   
+                       
+  logic_panel1c = new G4LogicalVolume(panel1c,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel1c");		//its name
+                                   
+ 
+  G4RotationMatrix rotMatrixpanel1c;  //unit rotaion matrix
+  G4double anglepanel1c= (7.5*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel1c.rotateZ(anglepanel1c); //rot matrix
+
+  phys_panel1c = new G4PVPlacement(G4Transform3D(rotMatrixpanel1c,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel1c)*mm,center*cos(-1*anglepanel1c)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel1c,		//its logical volume				 
+                                 "panel1c",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+
+  panel2c = new G4Box("panel2c",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel2c = new G4LogicalVolume(panel2c,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel2");		//its name
+                                  
+  G4RotationMatrix rotMatrixpanel2c;  //unit rotaion matrix
+  G4double anglepanel2c= ((15.0+7.5)*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel2c.rotateZ(anglepanel2c); //rot matrix
+
+  phys_panel2c = new G4PVPlacement(G4Transform3D(rotMatrixpanel2c,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel2c)*mm,center*cos(-1*anglepanel2c)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel2c,		//its logical volume				 
+                                 "panel2c",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+  panel3c = new G4Box("panel3c",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel3c = new G4LogicalVolume(panel3c,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel3c");		//its name
+                                  
+  G4RotationMatrix rotMatrixpanel3c;  //unit rotaion matrix
+  G4double anglepanel3c= ((30.0+7.5)*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel3c.rotateZ(anglepanel3c); //rot matrix
+  phys_panel3c = new G4PVPlacement(G4Transform3D(rotMatrixpanel3c,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel3c)*mm,center*cos(-1*anglepanel3c)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel3c,		//its logical volume				 
+                                 "panel3c",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+  panel4c = new G4Box("panel4c",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel4c = new G4LogicalVolume(panel4c,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel4c");		//its name
+                                   
+ 
+  G4RotationMatrix rotMatrixpanel4c;  //unit rotaion matrix
+  G4double anglepanel4c= ((45.0+7.5)*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel4c.rotateZ(anglepanel4c); //rot matrix
+  phys_panel4c = new G4PVPlacement(G4Transform3D(rotMatrixpanel4c,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel4c)*mm,center*cos(-1*anglepanel4c)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel4c,		//its logical volume				 
+                                 "panel4c",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+  panel5c = new G4Box("panel5c",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel5c = new G4LogicalVolume(panel5c,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel5c");		//its name
+                                   
+  G4RotationMatrix rotMatrixpanel5c;  //unit rotaion matrix
+  //hh G4double anglepanel5= (-180.0*pi/(double)180)*rad; //rotation angle
+  G4double anglepanel5c= ((60.0+7.5)*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel5c.rotateZ(anglepanel5c); //rot matrix
+  phys_panel5c = new G4PVPlacement(G4Transform3D(rotMatrixpanel5c,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel5c)*mm,center*cos(-1*anglepanel5c)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel5c,		//its logical volume				 
+                                 "panel5c",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+  panel6c = new G4Box("panel6c",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel6c = new G4LogicalVolume(panel6c,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel6c");		//its name
+                                  
+  G4RotationMatrix rotMatrixpanel6c;  //unit rotaion matrix
+  G4double anglepanel6c= ((75+7.5)*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel6c.rotateZ(anglepanel6c); //rot matrix
+  phys_panel6c = new G4PVPlacement(G4Transform3D(rotMatrixpanel6c,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel6c)*mm,center*cos(-1*anglepanel6c)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel6c,		//its logical volume				 
+                                 "panel6c",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+  panel7c = new G4Box("panel7c",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel7c = new G4LogicalVolume(panel7c,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel7c");		//its name
+                                   
+  G4RotationMatrix rotMatrixpanel7c;  //unit rotaion matrix
+  G4double anglepanel7c= ((90.0+7.5)*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel7c.rotateZ(anglepanel7c); //rot matrix
+  phys_panel7c = new G4PVPlacement(G4Transform3D(rotMatrixpanel7c,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel7c)*mm,center*cos(-1*anglepanel7c)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel7c,		//its logical volume				 
+                                 "panel7c",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+  panel8c = new G4Box("panel8c",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel8c = new G4LogicalVolume(panel8c,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel8c");		//its name
+                                  
+
+  G4RotationMatrix rotMatrixpanel8c;  //unit rotaion matrix
+  G4double anglepanel8c= ((105.0+7.5)*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel8c.rotateZ(anglepanel8c); //rot matrix
+  phys_panel8c = new G4PVPlacement(G4Transform3D(rotMatrixpanel8c,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel8c)*mm,center*cos(-1*anglepanel8c)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel8c,		//its logical volume				 
+                                 "panel8c",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+//8panelsEND/////////////////////////////
+
+  panel1d = new G4Box("panel1d",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                   
+                       
+  logic_panel1d = new G4LogicalVolume(panel1d,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel1d");		//its name
+                                   
+ 
+  G4RotationMatrix rotMatrixpanel1d;  //unit rotaion matrix
+  G4double anglepanel1d= ((120+7.5)*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel1d.rotateZ(anglepanel1d); //rot matrix
+  phys_panel1d = new G4PVPlacement(G4Transform3D(rotMatrixpanel1d,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel1d)*mm,center*cos(-1*anglepanel1d)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel1d,		//its logical volume				 
+                                 "panel1d",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+
+  panel2d = new G4Box("panel2d",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel2d = new G4LogicalVolume(panel2d,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel2d");		//its name
+                                  
+  G4RotationMatrix rotMatrixpanel2d;  //unit rotaion matrix
+  G4double anglepanel2d= ((135+7.5)*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel2d.rotateZ(anglepanel2d); //rot matrix
+
+  phys_panel2d = new G4PVPlacement(G4Transform3D(rotMatrixpanel2d,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel2d)*mm,center*cos(-1*anglepanel2d)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel2d,		//its logical volume				 
+                                 "panel2d",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+  panel3d = new G4Box("panel3d",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel3d = new G4LogicalVolume(panel3d,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel3d");		//its name
+                                  
+  G4RotationMatrix rotMatrixpanel3d;  //unit rotaion matrix
+  G4double anglepanel3d= ((150+7.5)*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel3d.rotateZ(anglepanel3d); //rot matrix
+
+  phys_panel3d = new G4PVPlacement(G4Transform3D(rotMatrixpanel3d,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel3d)*mm,center*cos(-1*anglepanel3d)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel3d,		//its logical volume				 
+                                 "panel3d",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+  panel4d = new G4Box("panel4d",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel4d = new G4LogicalVolume(panel4d,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel4d");		//its name
+                                   
+ 
+  G4RotationMatrix rotMatrixpanel4d;  //unit rotaion matrix
+  G4double anglepanel4d= ((165+7.5)*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel4d.rotateZ(anglepanel4d); //rot matrix
+
+  phys_panel4d = new G4PVPlacement(G4Transform3D(rotMatrixpanel4d,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel4d)*mm,center*cos(-1*anglepanel4d)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel4d,		//its logical volume				 
+                                 "panel4d",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+  panel5d = new G4Box("panel5d",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel5d = new G4LogicalVolume(panel5d,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel5d");		//its name
+                                   
+  G4RotationMatrix rotMatrixpanel5d;  //unit rotaion matrix
+  G4double anglepanel5d= ((180+7.5)*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel5d.rotateZ(anglepanel5d); //rot matrix
+
+  phys_panel5d = new G4PVPlacement(G4Transform3D(rotMatrixpanel5d,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel5d)*mm,center*cos(-1*anglepanel5d)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel5d,		//its logical volume				 
+                                 "panel5d",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+  panel6d = new G4Box("panel6d",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel6d = new G4LogicalVolume(panel6d,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel6d");		//its name
+                                  
+  G4RotationMatrix rotMatrixpanel6d;  //unit rotaion matrix
+  G4double anglepanel6d= ((195+7.5)*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel6d.rotateZ(anglepanel6d); //rot matrix
+
+  phys_panel6d = new G4PVPlacement(G4Transform3D(rotMatrixpanel6d,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel6d)*mm,center*cos(-1*anglepanel6d)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel6d,		//its logical volume				 
+                                 "panel6d",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+  panel7d = new G4Box("panel7d",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel7d = new G4LogicalVolume(panel7d,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel7d");		//its name
+                                   
+  G4RotationMatrix rotMatrixpanel7d;  //unit rotaion matrix
+  G4double anglepanel7d= ((210+7.5)*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel7d.rotateZ(anglepanel7d); //rot matrix
+
+  phys_panel7d = new G4PVPlacement(G4Transform3D(rotMatrixpanel7d,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel7d)*mm,center*cos(-1*anglepanel7d)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel7d,		//its logical volume				 
+                                 "panel7d",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+  panel8d = new G4Box("panel8d",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel8d = new G4LogicalVolume(panel8d,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel8d");		//its name
+                                  
+
+  G4RotationMatrix rotMatrixpanel8d;  //unit rotaion matrix
+  G4double anglepanel8d= ((225+7.5)*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel8d.rotateZ(anglepanel8d); //rot matrix
+
+  phys_panel8d = new G4PVPlacement(G4Transform3D(rotMatrixpanel8d,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel8d)*mm,center*cos(-1*anglepanel8d)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel8d,		//its logical volume				 
+                                 "panel8d",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+//16panelsEND/////////////////////////////
+
+  panel1e = new G4Box("panel1e",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                   
+                       
+  logic_panel1e = new G4LogicalVolume(panel1e,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel1e");		//its name
+                                   
+ 
+  G4RotationMatrix rotMatrixpanel1e;  //unit rotaion matrix
+  G4double anglepanel1e= ((240+7.5)*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel1e.rotateZ(anglepanel1e); //rot matrix
+
+  phys_panel1e = new G4PVPlacement(G4Transform3D(rotMatrixpanel1e,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel1e)*mm,center*cos(-1*anglepanel1e)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel1e,		//its logical volume				 
+                                 "panel1e",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+
+  panel2e = new G4Box("panel2e",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel2e = new G4LogicalVolume(panel2e,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel2e");		//its name
+                                  
+  G4RotationMatrix rotMatrixpanel2e;  //unit rotaion matrix
+  G4double anglepanel2e= ((255+7.5)*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel2e.rotateZ(anglepanel2e); //rot matrix
+
+  phys_panel2e = new G4PVPlacement(G4Transform3D(rotMatrixpanel2e,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel2e)*mm,center*cos(-1*anglepanel2e)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel2e,		//its logical volume				 
+                                 "panel2e",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+  panel3e = new G4Box("panel3e",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel3e = new G4LogicalVolume(panel3e,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel3e");		//its name
+                                  
+  G4RotationMatrix rotMatrixpanel3e;  //unit rotaion matrix
+  G4double anglepanel3e= ((270+7.5)*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel3e.rotateZ(anglepanel3e); //rot matrix
+
+  phys_panel3e = new G4PVPlacement(G4Transform3D(rotMatrixpanel3e,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel3e)*mm,center*cos(-1*anglepanel3e)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel3e,		//its logical volume				 
+                                 "panel3e",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+  panel4e = new G4Box("panel4e",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel4e = new G4LogicalVolume(panel4e,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel4e");		//its name
+                                   
+ 
+  G4RotationMatrix rotMatrixpanel4e;  //unit rotaion matrix
+  G4double anglepanel4e= ((285+7.5)*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel4e.rotateZ(anglepanel4e); //rot matrix
+
+  phys_panel4e = new G4PVPlacement(G4Transform3D(rotMatrixpanel4e,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel4e)*mm,center*cos(-1*anglepanel4e)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel4e,		//its logical volume				 
+                                 "panel4e",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+  panel5e = new G4Box("panel5e",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel5e = new G4LogicalVolume(panel5e,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel5e");		//its name
+                                   
+  G4RotationMatrix rotMatrixpanel5e;  //unit rotaion matrix
+  G4double anglepanel5e= ((300+7.5)*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel5e.rotateZ(anglepanel5e); //rot matrix
+
+  phys_panel5e = new G4PVPlacement(G4Transform3D(rotMatrixpanel5e,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel5e)*mm,center*cos(-1*anglepanel5e)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel5e,		//its logical volume				 
+                                 "panel5e",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+  panel6e = new G4Box("panel6e",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel6e = new G4LogicalVolume(panel6e,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel6e");		//its name
+                                  
+  G4RotationMatrix rotMatrixpanel6e;  //unit rotaion matrix
+  G4double anglepanel6e= ((315+7.5)*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel6e.rotateZ(anglepanel6e); //rot matrix
+
+  phys_panel6e = new G4PVPlacement(G4Transform3D(rotMatrixpanel6e,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel6e)*mm,center*cos(-1*anglepanel6e)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel6e,		//its logical volume				 
+                                 "panel6e",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+  panel7e = new G4Box("panel7e",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel7e = new G4LogicalVolume(panel7e,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel7e");		//its name
+                                   
+  G4RotationMatrix rotMatrixpanel7e;  //unit rotaion matrix
+  G4double anglepanel7e= ((330+7.5)*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel7e.rotateZ(anglepanel7e); //rot matrix
+
+  phys_panel7e = new G4PVPlacement(G4Transform3D(rotMatrixpanel7e,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel7e)*mm,center*cos(-1*anglepanel7e)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel7e,		//its logical volume				 
+                                 "panel7e",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+
+  panel8e = new G4Box("panel8e",				//its name
+                   dt*mm,wide*mm,panelH);	//its size
+                       
+  logic_panel8e = new G4LogicalVolume(panel8e,		//its solid
+                                   defaultMaterial5,	//its material
+                                   "panel8e");		//its name
+                                  
+
+  G4RotationMatrix rotMatrixpanel8e;  //unit rotaion matrix
+  G4double anglepanel8e= ((345+7.5)*pi/(double)180)*rad; //rotation angle
+  rotMatrixpanel8e.rotateZ(anglepanel8e); //rot matrix
+
+  phys_panel8e = new G4PVPlacement(G4Transform3D(rotMatrixpanel8e,			//rotation
+  				 G4ThreeVector(center*sin(-1*anglepanel8e)*mm,center*cos(-1*anglepanel8e)*mm,0*mm)),	//at (0,0,0)
+                                 logic_panel8e,		//its logical volume				 
+                                 "panel8e",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+//48panelsEND/////////////////////////////
+////////////////////Pipe Materials acrylic 
+
+  //G4double pRMinInP = 294*mm;
+  G4double pRMinInP = 311*mm;
+  G4double pRMaxInP= 314*mm;
+  G4double pDzInP= panelH;
+  CenterInP = new G4Tubs("CenterInP",				//its name
+                         pRMinInP,
+                         pRMaxInP,
+                         pDzInP,
+                         0.*deg,                       //pSPhi,
+                         360.*deg);                    //pDPhi
+                       
+  logic_CenterInP = new G4LogicalVolume(CenterInP,		//its solid
+                                   defaultMaterial,	//its material vacuum 
+                                   //defaultMaterial8,	//its material acrylic 
+                                   //defaultMaterial3,	//its material WPb check 
+                                   "CenterInP");		//its name
+                                  
+
+
+  G4double pRMinOuP = 352*mm;
+  G4double pRMaxOuP= 355*mm;
+  //G4double pRMaxOuP= 370*mm;
+  G4double pDzOuP= panelH;
+  CenterOuP = new G4Tubs("CenterOuP",				//its name
+                         pRMinOuP,
+                         pRMaxOuP,
+                         pDzOuP,
+                         0.*deg,                       //pSPhi,
+                         360.*deg);                    //pDPhi
+                       
+  logic_CenterOuP = new G4LogicalVolume(CenterOuP,		//its solid
+                                   //defaultMaterial8,	//its material acrylic 
+                                   defaultMaterial,	//its material vacuum 
+                                   "CenterOuP");		//its name
+                                  
+
+//Sep2010
+//  G4double pRMinD = 5*mm;
+  G4double pRMinD = 0;
+  //G4double pRMaxD= 35*mm;
+  G4double pRMaxD= (outerEdge-wide*2);
+  G4double pDzD= panelH;
+  CenterD = new G4Tubs("CenterD",				//its name
+                         pRMinD*mm,
+                         pRMaxD*mm,
+                         pDzD*mm,
+                         0.*deg,                       //pSPhi,
+                         360.*deg);                    //pDPhi
+                       
+  logic_CenterD = new G4LogicalVolume(CenterD,		//its solid
+                                   defaultMaterial6,	//its material LedTangstate 
+                                   "CenterD");		//its name
+                                  
+
+  phys_CenterD = new G4PVPlacement(0,			//no rotation
+  				 G4ThreeVector(0*mm,0*mm,0*mm),	//at (0,0,0)
+                                 logic_CenterD,		//its logical volume			 
+                                 "CenterD",		//its name
+                                 logicFrame,			//its mother  volume
+                                 false,			//no boolean operation
+                                 0);			//copy number
+  */
+  
+  BodySD* bodySD = new BodySD();
+  G4SDManager::GetSDMpointer()->AddNewDetector(bodySD);
+  log_sensor->SetSensitiveDetector(bodySD);
+  //logicFrame->SetSensitiveDetector(bodySD);//hiromi
+  /*
+  logic_panel1->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel2->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel3->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel4->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel5->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel6->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel7->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel8->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel1a->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel2a->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel3a->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel4a->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel5a->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel6a->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel7a->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel8a->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel1b->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel2b->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel3b->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel4b->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel5b->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel6b->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel7b->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel8b->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel1c->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel2c->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel3c->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel4c->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel5c->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel6c->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel7c->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel8c->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel1d->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel2d->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel3d->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel4d->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel5d->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel6d->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel7d->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel8d->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel1e->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel2e->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel3e->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel4e->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel5e->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel6e->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel7e->SetSensitiveDetector(bodySD);//hiromi
+  logic_panel8e->SetSensitiveDetector(bodySD);//hiromi
+  */
+
+
+  G4UserLimits* stepLimit0;
+  stepLimit0 = new  G4UserLimits(10*mm);// 1000*mm unpol 100*mm pol
+  G4UserLimits* stepLimit;
+  stepLimit = new  G4UserLimits(0.001*mm);// 1000*mm unpol 100*mm pol
+
+  
+  logicFrame-> SetUserLimits(stepLimit0);
+  /*
+  logic_panel1-> SetUserLimits(stepLimit);
+  logic_panel2-> SetUserLimits(stepLimit);
+  logic_panel3-> SetUserLimits(stepLimit);
+  logic_panel4-> SetUserLimits(stepLimit);
+  logic_panel5-> SetUserLimits(stepLimit);
+  logic_panel6-> SetUserLimits(stepLimit);
+  logic_panel7-> SetUserLimits(stepLimit);
+  logic_panel8-> SetUserLimits(stepLimit);
+  logic_panel1a-> SetUserLimits(stepLimit);
+  logic_panel2a-> SetUserLimits(stepLimit);
+  logic_panel3a-> SetUserLimits(stepLimit);
+  logic_panel4a-> SetUserLimits(stepLimit);
+  logic_panel5a-> SetUserLimits(stepLimit);
+  logic_panel6a-> SetUserLimits(stepLimit);
+  logic_panel7a-> SetUserLimits(stepLimit);
+  logic_panel8a-> SetUserLimits(stepLimit);
+  logic_panel1b-> SetUserLimits(stepLimit);
+  logic_panel2b-> SetUserLimits(stepLimit);
+  logic_panel3b-> SetUserLimits(stepLimit);
+  logic_panel4b-> SetUserLimits(stepLimit);
+  logic_panel5b-> SetUserLimits(stepLimit);
+  logic_panel6b-> SetUserLimits(stepLimit);
+  logic_panel7b-> SetUserLimits(stepLimit);
+  logic_panel8b-> SetUserLimits(stepLimit);
+  logic_panel1c-> SetUserLimits(stepLimit);
+  logic_panel2c-> SetUserLimits(stepLimit);
+  logic_panel3c-> SetUserLimits(stepLimit);
+  logic_panel4c-> SetUserLimits(stepLimit);
+  logic_panel5c-> SetUserLimits(stepLimit);
+  logic_panel6c-> SetUserLimits(stepLimit);
+  logic_panel7c-> SetUserLimits(stepLimit);
+  logic_panel8c-> SetUserLimits(stepLimit);
+  logic_panel1d-> SetUserLimits(stepLimit);
+  logic_panel2d-> SetUserLimits(stepLimit);
+  logic_panel3d-> SetUserLimits(stepLimit);
+  logic_panel4d-> SetUserLimits(stepLimit);
+  logic_panel5d-> SetUserLimits(stepLimit);
+  logic_panel6d-> SetUserLimits(stepLimit);
+  logic_panel7d-> SetUserLimits(stepLimit);
+  logic_panel8d-> SetUserLimits(stepLimit);
+  logic_panel1e-> SetUserLimits(stepLimit);
+  logic_panel2e-> SetUserLimits(stepLimit);
+  logic_panel3e-> SetUserLimits(stepLimit);
+  logic_panel4e-> SetUserLimits(stepLimit);
+  logic_panel5e-> SetUserLimits(stepLimit);
+  logic_panel6e-> SetUserLimits(stepLimit);
+  logic_panel7e-> SetUserLimits(stepLimit);
+  logic_panel8e-> SetUserLimits(stepLimit);
+  */
+ 
+  //                                        
+  // Visualization attributes
+  //
+  logicWorld->SetVisAttributes (G4VisAttributes::Invisible);
+  logicFrame->SetVisAttributes (G4VisAttributes::Invisible);
+
+  // G4VisAttributes* atb= new G4VisAttributes(G4Colour(0.5,0.5,0.5));//gray
+   //  logic_CenterW->SetVisAttributes(atb);}
+ G4VisAttributes* vvanecol= new G4VisAttributes(G4Colour(0.9,0.9,0.9));
+ G4VisAttributes* sensorcol= new G4VisAttributes(G4Colour(0.8,0.8,0.8));//190, 190, 190　
+ G4VisAttributes* subcol= new G4VisAttributes(G4Color(0.,0.4,0.)); // 0, 139, 69
+ G4VisAttributes* tubecol= new G4VisAttributes(G4Colour(0.4,0.4,0.4)); //105, 105, 105
+ log_vvane->SetVisAttributes(vvanecol);
+ log_sensor->SetVisAttributes(sensorcol);
+ log_sub->SetVisAttributes(subcol);
+ log_sub2->SetVisAttributes(subcol);
+ log_tube->SetVisAttributes(tubecol);
+
+
+
+  //
+  //always return the physical World
+  //
+  return physiWorld;
+}
+
+
+void DetectorConstruction::PrintCalorParameters()
+{}
+
+
+#include "G4FieldManager.hh"
+#include "G4TransportationManager.hh"
+#include "MagneticField.hh"
+
+void DetectorConstruction::SetMagField(G4double fieldValue)
+{
+
+  //apply a global uniform magnetic field along Z axis
+
+  G4FieldManager* fieldMgr
+   = G4TransportationManager::GetTransportationManager()->GetFieldManager();
+
+
+  mymagField = new MagneticField();
+
+  mymagField->pStepper = new G4ClassicalRK4(mymagField->fEquation,12);
+
+  fieldMgr->SetDetectorField(mymagField);
+  fieldMgr->CreateChordFinder(mymagField);
+
+
+}
+
+
+#include "G4RunManager.hh"
+
+void DetectorConstruction::UpdateGeometry()
+{
+  G4RunManager::GetRunManager()->DefineWorldVolume(ConstructCalorimeter());
+}
+
