@@ -5,6 +5,8 @@
 #include "G4ParticleGun.hh"
 #include "G4ParticleTable.hh"
 #include "G4ParticleDefinition.hh"
+#include "G4MuonPlus.hh"
+#include "G4Electron.hh"
 #include "Randomize.hh"
 #include "TMath.h"
 
@@ -47,8 +49,11 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
   double Pmu = 300;// MeV/c 
   double Pe = 235;// MeV/c 
 
-  double e_mass = 0.510998910;// MeV
-  double mu_mass = 105.658;// MeV
+  // previous values
+  //double e_mass = 0.510998910;// MeV
+  //double mu_mass = 105.658;// MeV
+  double e_mass = G4Electron::Electron()->GetPDGMass(); // MeV
+  double mu_mass = G4MuonPlus::MuonPlus()->GetPDGMass(); // MeV
   double Ee = sqrt(Pe*Pe+e_mass*e_mass);
   double Emu = sqrt(Pmu*Pmu+mu_mass*mu_mass);
   double Ke = Ee-e_mass;

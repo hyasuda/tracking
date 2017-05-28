@@ -17,6 +17,6 @@ Edit GNUMakefile if needed and then do
 ## Run 
 To run execution file, do the following command for example  
 `muong2edmsim macro/tmp_track_0.mac`  
-Output file name will need to be editted in include/ApplicationManager.hh
+Output file name will need to be editted in include/ApplicationManager.hh  
 `  sprintf(filename,"/gluster/data/g2/tyosioka/data/mug2edm.%s.%s.root",buff,tok);`  
 
