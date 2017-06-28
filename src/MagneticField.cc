@@ -91,11 +91,12 @@ void MagneticField::GetFieldValue( const G4double Point[3],G4double* Bfield ) co
   // Point[0],Point[1],Point[2] are x-, y-, z-cordinates 
 
   const G4double Bz = 3.0*tesla;//3.0*tesla;
-  const G4double Er = 2.113987E+6*volt/m;
- // Er=a*Bz*c*beta/(double)((1-beta*beta)-a*beta*beta);//volt/m
- //a=0.0011659208;
- //gamma=5;
- //beta=sqrt(1-1/(double)pow(gamma,2));
+  const G4double Er = 0.*volt/m; // set electroic fieled to zero
+  //const G4double Er = 2.113987E+6*volt/m;
+  // Er=a*Bz*c*beta/(double)((1-beta*beta)-a*beta*beta);//volt/m
+  //a=0.0011659208;
+  //gamma=5;
+  //beta=sqrt(1-1/(double)pow(gamma,2));
 
   double pi=TMath::Pi();
   double Ex,Ey;
