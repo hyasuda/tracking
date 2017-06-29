@@ -25,8 +25,8 @@ class BodySD
 
   public:
 
-    G4bool ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist);
-
+  G4bool ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist);
+  
      virtual void Initialize(G4HCofThisEvent* HCTE);
      virtual void EndOfEvent(G4HCofThisEvent* HCTE);
 //     virtual void clear();

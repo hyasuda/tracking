@@ -35,6 +35,8 @@
 #include <time.h>
 #include <string.h>
 
+#include "G4SystemOfUnits.hh"
+
 class ApplicationManager
 {
 
@@ -64,10 +66,10 @@ class ApplicationManager
     TTree* ntupleBody;
     TTree* ntupleDecay;
 
-    int   eventNum;
-    int   hitInfo;
+    int   fEventNum;
+    int   fHitInfo;
 
-    std::vector<int> pID;
+    std::vector<int> fPID;
     std::vector<int> bodyTyp;
     std::vector<int> bodyStatus;
     std::vector<int> chID;//not yet hiromi 2010/05/25
@@ -150,8 +152,8 @@ class ApplicationManager
     void Save();
     void Fill(G4double edep );
     void Fill(G4double x, G4double y, G4double edep);
-    void FillNtuple(G4int eventNum, G4int hitInfo); 
-    void FillDecayNtuple(G4int eventNum); 
+    void FillNtuple(); 
+    void FillDecayNtuple(); 
     void PutNtupleValue(G4int pID,G4double kE, G4double tE, G4ThreeVector pos, G4ThreeVector mom, 
               G4double Gtime, G4double Ptime, G4int bodyTyp, G4int bodyStatus, G4int chID, G4int evtNum, G4int hitInfo, G4double CurrentDepE, G4double EachDepE);
     void PutDecayValue(G4int evtNum,G4double DKEnergy, G4double DTEnergy, G4ThreeVector Dpos, G4ThreeVector Dmom, 
@@ -358,7 +360,7 @@ inline void ApplicationManager::Open()
   time_t now = time(NULL);
   struct tm *pnow = localtime(&now);
   char buff[128]="";
-  sprintf(buff,"%d%d%d%d%d%d",pnow->tm_year+1900,pnow->tm_mon + 1,pnow->tm_mday,pnow->tm_hour,pnow->tm_min,pnow->tm_sec);
+  sprintf(buff,"%04d%02d%02d%02d%02d%02d",pnow->tm_year+1900,pnow->tm_mon + 1,pnow->tm_mday,pnow->tm_hour,pnow->tm_min,pnow->tm_sec);
   //  printf(buff);
 
   char hostname[128];
@@ -369,7 +371,8 @@ inline void ApplicationManager::Open()
   //  printf(tok);
 
   char filename[256];
-  sprintf(filename,"/gluster/data/g2/tyosioka/data/mug2edm.%s.%s.root",buff,tok);
+  //sprintf(filename,"/gluster/data/g2/tyosioka/data/mug2edm.%s.%s.root",buff,tok);
+  sprintf(filename,"data/mug2edm_%s_%s.root",buff,tok);
 
   file= new TFile( filename, "RECREATE", "Geant4 User Application" );
   return;
@@ -408,7 +411,7 @@ inline void ApplicationManager::Fill(G4double x, G4double y, G4double edep)
 inline void ApplicationManager::ClearNtuple(G4int evtNum) 
 {
 
-  eventNum= evtNum;
+  fEventNum= evtNum;
   for(int i=0;i<4;++i){
     DkEnergy[i] = 0;
     Dmomv_x[i] = 0;
@@ -425,7 +428,7 @@ inline void ApplicationManager::ClearNtuple(G4int evtNum)
   kEnergy.clear();
   EachDepE.clear();
   CurrentDepE.clear();
-  pID.clear();
+  fPID.clear();
   bodyTyp.clear();
   bodyStatus.clear();
   chID.clear();
@@ -441,7 +444,7 @@ inline void ApplicationManager::ClearNtuple(G4int evtNum)
 
 
 
-  hitInfo=0;
+  fHitInfo=0;
 
   theHitInfo=0;
 //  printf("ApplicationManager.hh::Clear eventNum=%d\n",eventNum);
@@ -454,11 +457,11 @@ inline void ApplicationManager::ClearNtuple(G4int evtNum)
 inline void ApplicationManager::PutDecayValue(G4int evtNum,G4double DKEnergy, G4double DTEnergy, 
 G4ThreeVector Dpos, G4ThreeVector Dmom, G4ThreeVector Dmomv, G4ThreeVector Dpol,G4double DGtime, G4double DPtime, G4int passID)
 {
+  //printf("passID=%d\n",passID);
+  if(passID<0 || passID>3) return;
 
-
-  printf("passID=%d\n",passID);
   if(passID==0){//mu+
-    eventNum= evtNum;
+    fEventNum= evtNum;
     Dpol_x = Dpol.x();
     Dpol_y = Dpol.y();
     Dpol_z = Dpol.z();
@@ -485,9 +488,9 @@ inline void ApplicationManager::PutNtupleValue(G4int parID, G4double KEnergy, G4
 G4ThreeVector pos, G4ThreeVector mom, G4double Gtime, G4double Ptime, G4int bodyType, G4int bodyStat, G4int chNum, G4int evtNum, G4int hitInformation,G4double DepEByEve,G4double eachDepE)
 {
  
- hitInfo=hitInformation;
+ fHitInfo=hitInformation;
 //if(hitInfo<16){
-  eventNum= evtNum;
+  fEventNum= evtNum;
 
 //  printf("putNtupleValue-----------------\n");
 //  printf("hitInformation=%d evtNum=%d\n",hitInformation,evtNum);
@@ -504,7 +507,7 @@ G4ThreeVector pos, G4ThreeVector mom, G4double Gtime, G4double Ptime, G4int body
   bodyTyp.push_back(bodyType);
   bodyStatus.push_back(bodyStat);
   chID.push_back(chNum);
-  pID.push_back(parID);
+  fPID.push_back(parID);
   mom_x.push_back(mom.x());
   mom_y.push_back(mom.y());
   mom_z.push_back(mom.z());
@@ -524,18 +527,14 @@ G4ThreeVector pos, G4ThreeVector mom, G4double Gtime, G4double Ptime, G4int body
 
 }
 
-inline void ApplicationManager::FillNtuple(G4int eventNum, G4int hitInfo)
+inline void ApplicationManager::FillNtuple()
 {
-//  printf("FillBefore---pID.size()=%d pos_x.size()=%d\n",pID.size(),pos_x.size());
   ntupleBody->Fill();
-//  printf("FillAfter---pID.size()=%d pos_x.size()=%d\n",pID.size(),pos_x.size());
-//  getchar();
   return;
 }
 
-inline void ApplicationManager::FillDecayNtuple(G4int eventNum)
+inline void ApplicationManager::FillDecayNtuple()
 {
-  //printf("FILL eventNum=%d \n",eventNum);
   ntupleDecay->Fill();
   return;
 }

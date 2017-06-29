@@ -24,36 +24,39 @@
 
 #include "G4HadronElasticPhysics.hh"
 #include "G4HadronDElasticPhysics.hh"
-#include "G4HadronQElasticPhysics.hh"
+//#include "G4HadronQElasticPhysics.hh" // obsolete
 #include "G4HadronHElasticPhysics.hh"
 
 #include "G4NeutronTrackingCut.hh"
-#include "G4QStoppingPhysics.hh"
-#include "G4LHEPStoppingPhysics.hh"
+//#include "G4QStoppingPhysics.hh" // obsolete
+#include "G4StoppingPhysics.hh"
+//#include "G4LHEPStoppingPhysics.hh" // obsolete
 #include "G4IonBinaryCascadePhysics.hh"
 #include "G4IonPhysics.hh"
 
 //#include "HadronPhysicsFTFC.hh"
 //#include "HadronPhysicsFTFP.hh"
-#include "HadronPhysicsFTFP_BERT.hh"
-#include "HadronPhysicsFTF_BIC.hh"
+#include "G4HadronPhysicsFTFP_BERT.hh"
+#include "G4HadronPhysicsFTF_BIC.hh"
 
-#include "HadronPhysicsLHEP.hh"
+// obsolete
+//#include "G4HadronPhysicsLHEP.hh"
 //#include "HadronPhysicsLHEP_BERT.hh"
-#include "HadronPhysicsLHEP_EMV.hh"
-//#include "HadronPhysicsLHEP_PRECO_HP.hh"
+//#include "G4HadronPhysicsLHEP_EMV.hh" 
+//#include "G4HadronPhysicsLHEP_PRECO_HP.hh"
 
 #include "G4HadronInelasticQBBC.hh"
 
+// obsolete
 //#include "HadronPhysicsQGSC.hh"
-#include "HadronPhysicsQGSC_BERT.hh"
+//#include "G4HadronPhysicsQGSC_BERT.hh" 
 //#include "HadronPhysicsQGSC_EFLOW.hh"
 
-#include "HadronPhysicsQGSP.hh"
-#include "HadronPhysicsQGSP_BERT.hh"
-#include "HadronPhysicsQGSP_BERT_HP.hh"
-#include "HadronPhysicsQGSP_BIC.hh"
-#include "HadronPhysicsQGSP_BIC_HP.hh"
+//#include "G4HadronPhysicsQGSP.hh" // obsolete
+#include "G4HadronPhysicsQGSP_BERT.hh"
+#include "G4HadronPhysicsQGSP_BERT_HP.hh"
+#include "G4HadronPhysicsQGSP_BIC.hh"
+#include "G4HadronPhysicsQGSP_BIC_HP.hh"
 
 //#include "G4HadronInelasticQLHEP.hh"
 
@@ -86,6 +89,9 @@
 
 //#include "G4Pythia6Decayer.hh"
 //#include "Pythia6Decayer.hh"
+
+#include "G4SystemOfUnits.hh"
+#include "G4PhysicalConstants.hh"
 
 F04PhysicsList::F04PhysicsList(G4String physicsList) : G4VModularPhysicsList() 
 {
@@ -124,7 +130,7 @@ F04PhysicsList::F04PhysicsList(G4String physicsList) : G4VModularPhysicsList()
 //    if(decayPhysics)decayPhysics->GetDecayProcess()->SetExtDecayer(extDecayer);
 
     // EM physics
-    // AddPhysicsList("emstandard");//motomoto atta hitomi1123
+    //AddPhysicsList("emstandard");//motomoto atta hitomi1123
     AddPhysicsList("standard");//changed by ku
 //Hiromi Add SyncRad 2009/08/13
 /*
@@ -400,7 +406,7 @@ void F04PhysicsList::AddPhysicsList(const G4String& name)
     } else if (name == "FTFP_BERT") {
 
        SetBuilderList1();
-       fHadronPhysics->push_back(new HadronPhysicsFTFP_BERT("hadron",true));
+       //fHadronPhysics->push_back(new HadronPhysicsFTFP_BERT("hadron",true)); // obsolete
        fDump = true;
 
     } else if (name == "FTFP_EMV") {
@@ -411,13 +417,15 @@ void F04PhysicsList::AddPhysicsList(const G4String& name)
     } else if (name == "FTF_BIC") {
 
        SetBuilderList0();
-       fHadronPhysics->push_back(new HadronPhysicsFTF_BIC("hadron",true));
+       //fHadronPhysics->push_back(new HadronPhysicsFTF_BIC("hadron",true)); // obsolete
        fDump = true;
 
-    } else if (name == "LHEP") {
+    }
+    /* obsolete
+       else if (name == "LHEP") {
 
        SetBuilderList2();
-       fHadronPhysics->push_back(new HadronPhysicsLHEP("hadron"));
+       //fHadronPhysics->push_back(new HadronPhysicsLHEP("hadron")); // obsolete
        fDump = true;
  
     } else if (name == "LHEP_BERT") {
@@ -439,7 +447,8 @@ void F04PhysicsList::AddPhysicsList(const G4String& name)
        //fHadronPhysics->push_back(new HadronPhysicsLHEP_PRECO_HP("hadron"));
        //fDump = true;
 
-    } else if (name == "QBBC") {
+       }*/
+    else if (name == "QBBC") {
 
        SetBuilderList0();
        fHadronPhysics->push_back(new G4HadronInelasticQBBC("QBBC",
@@ -465,7 +474,7 @@ void F04PhysicsList::AddPhysicsList(const G4String& name)
 
     } else if (name == "QBBC_HP") {
 
-       SetBuilderList0(true);
+       SetBuilderList0();
        fHadronPhysics->push_back(new G4HadronInelasticQBBC("QBBC",
                                                           verboseLevel,
                                                           false,false,
@@ -477,7 +486,7 @@ void F04PhysicsList::AddPhysicsList(const G4String& name)
        //fHadronPhysics->push_back(new HadronPhysicsQGSC("hadron",true));
        //fDump = true;
 
-    } else if (name == "QGSC_BERT") {
+    }/* else if (name == "QGSC_BERT") {
 
        SetBuilderList4();
        fHadronPhysics->push_back(new HadronPhysicsQGSC_BERT("hadron",true));
@@ -494,16 +503,18 @@ void F04PhysicsList::AddPhysicsList(const G4String& name)
        AddPhysicsList("emstandard_opt1");
        AddPhysicsList("QGSC");
 
-    } else if (name == "QGSP") {
+       }*/
+    /* else if (name == "QGSP") {
 
        SetBuilderList1();
        fHadronPhysics->push_back(new HadronPhysicsQGSP("hadron",true));
        fDump = true;
 
-    } else if (name == "QGSP_BERT") {
+       }*/
+    else if (name == "QGSP_BERT") {
 
        SetBuilderList1();
-       fHadronPhysics->push_back(new HadronPhysicsQGSP_BERT("hadron",true));
+       fHadronPhysics->push_back(new G4HadronPhysicsQGSP_BERT("hadron",true));
        fDump = true;
 
     } else if (name == "QGSP_BERT_EMV") {
@@ -513,22 +524,22 @@ void F04PhysicsList::AddPhysicsList(const G4String& name)
 
     } else if (name == "QGSP_BERT_HP") {
 
-       SetBuilderList1(true);
-       fHadronPhysics->push_back(new HadronPhysicsQGSP_BERT_HP("hadron",true));
+       SetBuilderList1();
+       fHadronPhysics->push_back(new G4HadronPhysicsQGSP_BERT_HP("hadron",true));
 
     } else if (name == "QGSP_BIC") {
 
        SetBuilderList0();
-       fHadronPhysics->push_back(new HadronPhysicsQGSP_BIC("hadron",true));
+       fHadronPhysics->push_back(new G4HadronPhysicsQGSP_BIC("hadron",true));
        fDump = true;
 
     } else if (name == "QGSP_BIC_HP") {
 
-       SetBuilderList0(true);
-       fHadronPhysics->push_back(new HadronPhysicsQGSP_BIC_HP("hadron",true));
+       SetBuilderList0();
+       fHadronPhysics->push_back(new G4HadronPhysicsQGSP_BIC_HP("hadron",true));
        fDump = true;
 
-    } else if (name == "QGSP_DIF") {
+    }/* else if (name == "QGSP_DIF") {
 
        SetBuilderList1();
        HadronPhysicsQGSP * hp = new HadronPhysicsQGSP("hadron");
@@ -537,7 +548,8 @@ void F04PhysicsList::AddPhysicsList(const G4String& name)
        fHadronPhysics->push_back(hp);
        fDump = true;
 
-    } else if (name == "QGSP_EMV") {
+       }*/
+    else if (name == "QGSP_EMV") {
 
        AddPhysicsList("emstandard_opt1");
        AddPhysicsList("QGSP");
@@ -549,7 +561,7 @@ void F04PhysicsList::AddPhysicsList(const G4String& name)
        AddPhysicsList("QGSP");
        fDump = true;
 
-    } else if (name == "QGSP_NQE") {
+    }/* else if (name == "QGSP_NQE") {
 
        SetBuilderList1();
        fHadronPhysics->push_back(new HadronPhysicsQGSP("hadron",false));
@@ -561,81 +573,73 @@ void F04PhysicsList::AddPhysicsList(const G4String& name)
        fHadronPhysics->push_back(new HadronPhysicsQGSP("hadron",true));
        fDump = true;
 
-    } else {
+       }*/ else {
 
        G4cout << "F04PhysicsList::AddPhysicsList: <" << name << ">"
               << " is not defined" << G4endl;
     }
 }
-void F04PhysicsList::SetBuilderList0(G4bool flagHP)
+void F04PhysicsList::SetBuilderList0()
 {
     ClearHadronPhysics();
 
     fHadronPhysics->push_back(new G4EmExtraPhysics("extra EM"));
-    fHadronPhysics->push_back(new G4HadronElasticPhysics("elastic",
-                                                        verboseLevel,
-                                                        flagHP));
-    fHadronPhysics->push_back(new  G4QStoppingPhysics("stopping",
-                                                     verboseLevel));
+    fHadronPhysics->push_back(new G4HadronElasticPhysics(verboseLevel));
+    //fHadronPhysics->push_back(new  G4QStoppingPhysics("stopping",verboseLevel));
+    fHadronPhysics->push_back(new G4StoppingPhysics("stopping", verboseLevel));
     fHadronPhysics->push_back(new G4IonBinaryCascadePhysics("ionBIC"));
     fHadronPhysics->push_back(new G4NeutronTrackingCut("nTackingCut",
                                                      verboseLevel));
 }
 
-void F04PhysicsList::SetBuilderList1(G4bool flagHP)
+void F04PhysicsList::SetBuilderList1()
 {
     ClearHadronPhysics();
 
     fHadronPhysics->push_back(new G4EmExtraPhysics("extra EM"));
-    fHadronPhysics->push_back(new G4HadronElasticPhysics("elastic",
-                                                        verboseLevel,
-                                                        flagHP));
-    fHadronPhysics->push_back(new  G4QStoppingPhysics("stopping",
-                                                     verboseLevel));
+    fHadronPhysics->push_back(new G4HadronElasticPhysics(verboseLevel));
+    //fHadronPhysics->push_back(new  G4QStoppingPhysics("stopping",verboseLevel)); // obsolete
+    fHadronPhysics->push_back(new G4StoppingPhysics("stopping", verboseLevel));
     fHadronPhysics->push_back(new G4IonBinaryCascadePhysics("ion"));
     fHadronPhysics->push_back(new G4NeutronTrackingCut("nTackingCut",
                                                      verboseLevel));
 }
 
-void F04PhysicsList::SetBuilderList2(G4bool flagHP)
+void F04PhysicsList::SetBuilderList2()
 {
     ClearHadronPhysics();
 
     fHadronPhysics->push_back(new G4EmExtraPhysics("extra EM"));
-    fHadronPhysics->push_back(new G4HadronElasticPhysics("LElastic",
-                                                        verboseLevel,
-                                                        flagHP));
+    fHadronPhysics->push_back(new G4HadronElasticPhysics(verboseLevel));
     fHadronPhysics->push_back(new G4IonBinaryCascadePhysics("ion"));
 }
 
-void F04PhysicsList::SetBuilderList3(G4bool flagHP)
+void F04PhysicsList::SetBuilderList3()
 {
     ClearHadronPhysics();
 
     fHadronPhysics->push_back(new G4EmExtraPhysics("extra EM"));
-    fHadronPhysics->push_back(new G4HadronElasticPhysics("LElastic",
-                                                        verboseLevel,
-                                                        flagHP));
-    fHadronPhysics->push_back(new  G4QStoppingPhysics("stopping",
-                                                     verboseLevel));
+    fHadronPhysics->push_back(new G4HadronElasticPhysics(verboseLevel));
+    //fHadronPhysics->push_back(new  G4QStoppingPhysics("stopping",verboseLevel)); // obsolete
+    fHadronPhysics->push_back(new G4StoppingPhysics("stopping", verboseLevel));
     fHadronPhysics->push_back(new G4IonBinaryCascadePhysics("ion"));
 }
 
-void F04PhysicsList::SetBuilderList4(G4bool)
+void F04PhysicsList::SetBuilderList4()
 {
     ClearHadronPhysics();
 
     fHadronPhysics->push_back(new G4EmExtraPhysics("extra EM"));
-    fHadronPhysics->push_back(new G4HadronQElasticPhysics("elastic",
-                                                        verboseLevel));
-    fHadronPhysics->push_back(new  G4QStoppingPhysics("stopping",
-                                                     verboseLevel));
+    //fHadronPhysics->push_back(new G4HadronQElasticPhysics("elastic",verboseLevel)); // obsolete
+    fHadronPhysics->push_back(new G4HadronElasticPhysics(verboseLevel));
+    //fHadronPhysics->push_back(new  G4QStoppingPhysics("stopping",verboseLevel)); // obsolete
+    fHadronPhysics->push_back(new G4StoppingPhysics("stopping", verboseLevel));
     fHadronPhysics->push_back(new G4IonBinaryCascadePhysics("ion"));
     fHadronPhysics->push_back(new G4NeutronTrackingCut("nTackingCut",
                                                      verboseLevel));
 }
 
-void F04PhysicsList::SetBuilderList5(G4bool flagHP)
+void F04PhysicsList::SetBuilderList5()
 {
     ClearHadronPhysics();
 
@@ -643,23 +647,22 @@ void F04PhysicsList::SetBuilderList5(G4bool flagHP)
     //fHadronPhysics->push_back(new G4HadronDElasticPhysics(verboseLevel,
     //                                       flagHP)); //changed 2012.11.13
     fHadronPhysics->push_back(new G4HadronDElasticPhysics(verboseLevel));
-    fHadronPhysics->push_back(new  G4QStoppingPhysics("stopping",
-                                                     verboseLevel));
+    //fHadronPhysics->push_back(new  G4QStoppingPhysics("stopping",verboseLevel)); // obsolete
+    fHadronPhysics->push_back(new G4StoppingPhysics("stopping", verboseLevel));
     fHadronPhysics->push_back(new G4IonBinaryCascadePhysics("ionBIC"));
     fHadronPhysics->push_back(new G4NeutronTrackingCut("nTackingCut",
                                                      verboseLevel));
 }
 
 
-void F04PhysicsList::SetBuilderList6(G4bool flagHP)
+void F04PhysicsList::SetBuilderList6()
 {
     ClearHadronPhysics();
 
     fHadronPhysics->push_back(new G4EmExtraPhysics("extra EM"));
-    fHadronPhysics->push_back(new G4HadronHElasticPhysics(verboseLevel,
-                                                          flagHP));
-    fHadronPhysics->push_back(new  G4QStoppingPhysics("stopping",
-                                                     verboseLevel));
+    fHadronPhysics->push_back(new G4HadronHElasticPhysics(verboseLevel));
+    //fHadronPhysics->push_back(new  G4QStoppingPhysics("stopping",verboseLevel));
+    fHadronPhysics->push_back(new G4StoppingPhysics("stopping", verboseLevel));
     fHadronPhysics->push_back(new G4IonBinaryCascadePhysics("ionBIC"));
     fHadronPhysics->push_back(new G4NeutronTrackingCut("nTackingCut",
                                                      verboseLevel));
@@ -729,14 +732,16 @@ void F04PhysicsList::AddStepMax()
 {
   // Step limitation seen as a process
    
+  auto theParticleIterator = GetParticleIterator();
   theParticleIterator->reset();
-  while ((*theParticleIterator)()){
-      G4ParticleDefinition* particle = theParticleIterator->value();
-      G4ProcessManager* pmanager = particle->GetProcessManager();
 
-      if (stepMaxProcess->IsApplicable(*particle) && !particle->IsShortLived())
+  while ( (*theParticleIterator)() ){
+    G4ParticleDefinition* particle = theParticleIterator->value();
+    G4ProcessManager* pmanager = particle->GetProcessManager();
+    
+    if (stepMaxProcess->IsApplicable(*particle) && !particle->IsShortLived())
       {
-         if (pmanager) pmanager ->AddDiscreteProcess(stepMaxProcess);
+	if (pmanager) pmanager ->AddDiscreteProcess(stepMaxProcess);
       }
   }
   /*

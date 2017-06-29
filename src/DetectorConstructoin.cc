@@ -1,3 +1,5 @@
+#include <vector>
+
 #include "DetectorConstruction.hh"
 #include "DetectorMessenger.hh"
 
@@ -29,6 +31,8 @@
 #include "MagneticField.hh"
 #include "TMath.h"
 
+#include "G4SystemOfUnits.hh"
+#include "G4PhysicalConstants.hh"
 
 DetectorConstruction::DetectorConstruction()
 :defaultMaterial(0),
@@ -96,9 +100,9 @@ U->AddIsotope(U8, abundance= 10.*perCent);
 // define simple materials
 //
 G4Material* Al = new G4Material("Aluminium", z=13., a=26.98*g/mole, density=2.699*g/cm3);
-G4Material* LAr = new G4Material("liquidArgon", z=18., a= 39.95*g/mole, density= 1.390*g/cm3);
+//G4Material* LAr = new G4Material("liquidArgon", z=18., a= 39.95*g/mole, density= 1.390*g/cm3);
 //G4Material* PurePb = new G4Material("Lead", z=82., a= 207.19*g/mole, density= 11.35*g/cm3);
-G4Material* Fe = new G4Material("Fe", z= 26., a= 55.83*g/mole, density = 7.874*g/cm3);
+//G4Material* Fe = new G4Material("Fe", z= 26., a= 55.83*g/mole, density = 7.874*g/cm3);
 //Fe;7874 kg/m3, 7.09E-6 m3/mol
 G4Material* PureSi = new G4Material("Si", z= 14., a= 28.09*g/mole, density = 2.33*g/cm3);
 //G4Material* W = new G4Material("Tangstate", z=74., a= 183.84*g/mole, density= 19.3*g/cm3);
@@ -338,10 +342,12 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter()
                                  0);			
 
 
-  G4double pi = TMath::Pi();
+  //G4double pi = TMath::Pi();
   G4int vane_num = 24;
-  G4RotationMatrix* rotvu[vane_num];
-  G4RotationMatrix* rotvd[vane_num];
+  std::vector<G4RotationMatrix *> rotvu;
+  std::vector<G4RotationMatrix *> rotvd;
+    //G4RotationMatrix* rotvu = new G4RotationMatrix[vane_num];
+    //G4RotationMatrix* rotvd = new G4RotationMatrix[vane_num];
   
   G4double d_center = 96.;
   G4double vvaneW = 217.5;
@@ -395,9 +401,10 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter()
 				  "vvane");
   
   for(int ii=0; ii<vane_num; ii++){
-    rotvu[ii] = new G4RotationMatrix();
+    rotvu.push_back(new G4RotationMatrix());
     G4double rangle = (G4double)2.*pi/vane_num*ii;
     rotvu[ii]->rotateZ(-rangle*rad);
+    //rotvu[ii]->rotateY(0.01*rad);
     phys_vvane = new G4PVPlacement(rotvu[ii],
 				   G4ThreeVector(r_vane*cos(rangle),
 						 r_vane*sin(rangle),
@@ -407,9 +414,10 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter()
 				   logicFrame,
 				   false,
 				   ii);
-    rotvd[ii] = new G4RotationMatrix();
-    
+    rotvd.push_back(new G4RotationMatrix());
+
     rotvd[ii]->rotateX(pi*rad);
+    //rotvd[ii]->rotateY(0.01*rad);
     rotvd[ii]->rotateZ(rangle*rad);
     phys_vvane = new G4PVPlacement(rotvd[ii],
 				   G4ThreeVector(r_vane*cos(rangle),
@@ -692,8 +700,8 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter()
 
   G4UserLimits* stepLimit0;
   stepLimit0 = new  G4UserLimits(10*mm);// 1000*mm unpol 100*mm pol
-  G4UserLimits* stepLimit;
-  stepLimit = new  G4UserLimits(0.001*mm);// 1000*mm unpol 100*mm pol
+  //G4UserLimits* stepLimit;
+  //stepLimit = new  G4UserLimits(0.001*mm);// 1000*mm unpol 100*mm pol
 
   
   logicFrame-> SetUserLimits(stepLimit0);
@@ -735,6 +743,16 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter()
   //
   //always return the physical World
   //
+
+  for(unsigned int i=0; i<rotvu.size(); i++){
+    delete rotvu.at(i);
+  }
+  for(unsigned int i=0; i<rotvd.size(); i++){
+    delete rotvd.at(i);
+  }
+  rotvu.clear();
+  rotvd.clear();
+
   return physiWorld;
 }
 
@@ -747,7 +765,7 @@ void DetectorConstruction::PrintCalorParameters()
 #include "G4TransportationManager.hh"
 #include "MagneticField.hh"
 
-void DetectorConstruction::SetMagField(G4double fieldValue)
+void DetectorConstruction::SetMagField(/*G4double fieldValue*/)
 {
 
   //apply a global uniform magnetic field along Z axis

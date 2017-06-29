@@ -27,7 +27,7 @@ class DetectorConstruction : public G4VUserDetectorConstruction
    ~DetectorConstruction();
 
   public:
-     void SetMagField(G4double);
+  void SetMagField(/*G4double*/);
      
      G4VPhysicalVolume* Construct();
 

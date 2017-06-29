@@ -7,6 +7,8 @@
 #include "G4ClassicalRK4.hh"
 #include "TMath.h"
 
+#include "G4SystemOfUnits.hh"
+
 MagneticField* MagneticField::object = 0;
 
 MagneticField::MagneticField()
@@ -98,7 +100,7 @@ void MagneticField::GetFieldValue( const G4double Point[3],G4double* Bfield ) co
   //gamma=5;
   //beta=sqrt(1-1/(double)pow(gamma,2));
 
-  double pi=TMath::Pi();
+  //double pi=TMath::Pi();
   double Ex,Ey;
  
   double posR=sqrt(pow(Point[0],2)+pow(Point[1],2));

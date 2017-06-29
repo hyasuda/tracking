@@ -48,7 +48,7 @@ void DetectorMessenger::SetNewValue(G4UIcommand* command,G4String newValue)
    { Detector->UpdateGeometry(); }
 
   if( command == MagFieldCmd )
-   { Detector->SetMagField(MagFieldCmd->GetNewDoubleValue(newValue));}
+    { Detector->SetMagField(/*MagFieldCmd->GetNewDoubleValue(newValue)*/);}
 }
 
 

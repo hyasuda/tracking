@@ -10,6 +10,7 @@
 #include "Randomize.hh"
 #include "TMath.h"
 
+#include "G4SystemOfUnits.hh"
 
 PrimaryGeneratorAction::PrimaryGeneratorAction(
                                              DetectorConstruction* DC)
@@ -46,34 +47,24 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 {
   //this function is called at the begining of event
   // 
-  double Pmu = 300;// MeV/c 
-  double Pe = 235;// MeV/c 
-
-  // previous values
-  //double e_mass = 0.510998910;// MeV
-  //double mu_mass = 105.658;// MeV
-  double e_mass = G4Electron::Electron()->GetPDGMass(); // MeV
-  double mu_mass = G4MuonPlus::MuonPlus()->GetPDGMass(); // MeV
-  double Ee = sqrt(Pe*Pe+e_mass*e_mass);
+  double mu_mass = G4MuonPlus::MuonPlus()->GetPDGMass()*MeV;
+  double Pmu = 300*MeV; // /c
   double Emu = sqrt(Pmu*Pmu+mu_mass*mu_mass);
-  double Ke = Ee-e_mass;
   double Kmu = Emu-mu_mass;
-  double gamma=Emu/(double)mu_mass;
-  double beta = Pmu/(double)Emu;
 
+  /*
   double rnd=rand()%1000;
   rnd=rnd/(double)1000;
-  double theta=2*pi*rnd;
 
   double rnd2=rand()%2000;
   rnd2=rnd2/(double)2000;
+  */
 
   G4double x0 = -0.333*m;//hiromiPOSITION
   G4double y0 = 0*m; 
   G4double z0 = 0*m;
 
   particleGun->SetParticleEnergy(Kmu*MeV);//Kinetic energy
-  //particleGun->SetParticleEnergy(Ke*MeV);
 
   particleGun->SetParticlePosition(G4ThreeVector(x0,y0,z0));//Initial position
   particleGun->SetParticlePolarization(G4ThreeVector(0.,1.,0.));//Initial polarization

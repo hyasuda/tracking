@@ -52,14 +52,14 @@ ApplicationManager::ApplicationManager()
   gErrorIgnoreLevel = 3000;
 
   ntupleBody= new TTree ("ntupleBody","GEANT4 BodyTree");
-  ntupleBody->Branch("eventNum",&eventNum,"eventNum/I");
+  ntupleBody->Branch("eventNum",&fEventNum,"eventNum/I");
   //ntupleBody->Branch("hitInfo",&hitInfo,"eventNum/I");
-  ntupleBody->Branch("hitInfo",&hitInfo,"hitInfo/I");
+  ntupleBody->Branch("hitInfo",&fHitInfo,"hitInfo/I");
 
   ntupleBody->Branch("bodyTyp",&bodyTyp);
   ntupleBody->Branch("bodyStatus",&bodyStatus);
   ntupleBody->Branch("chID",&chID);
-  ntupleBody->Branch("pID",&pID);
+  ntupleBody->Branch("pID",&fPID);
   ntupleBody->Branch("CurrentDepE",&CurrentDepE);
   ntupleBody->Branch("EachDepE",&EachDepE);
   ntupleBody->Branch("kEnergy",&kEnergy);
@@ -74,7 +74,7 @@ ApplicationManager::ApplicationManager()
   ntupleBody->Branch("tEnergy",&tEnergy);
 
   ntupleDecay= new TTree ("ntupleDecay","GEANT4 DecayTree");
-  ntupleDecay->Branch("eventNum",&eventNum,"eventNum/I");
+  ntupleDecay->Branch("eventNum",&fEventNum,"eventNum/I");
   ntupleDecay->Branch("Dptime",&Dptime,"Dptime/F");
   ntupleDecay->Branch("Dgtime",&Dgtime,"Dgtime/F");
   ntupleDecay->Branch("DkEnergy",&DkEnergy,"DkEnergy[4]/F");

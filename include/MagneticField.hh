@@ -18,9 +18,9 @@ class MagneticField
 
   public:
   //G4Mag_SpinEqRhs* fEquation;
-  G4EqEMFieldWithSpin* fEquation;
   G4ChordFinder* fChordFinder;
   G4MagIntegratorStepper* pStepper;
+  G4EqEMFieldWithSpin* fEquation;
   G4PropagatorInField*    fieldPropagator;
 
   void updateField();

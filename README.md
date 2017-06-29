@@ -6,17 +6,20 @@ This is Geant4 simulation for muon g-2/EDM detector
 # Usage
 ## Set enviroment for ROOT and Geant4
 (at bepp)  
-`source /gluster/share/share.sh`  
-`source /gluster/share/geant4/geant4.9.6.p03/geant4.9.6.p03-install/bin/geant4.sh`  
-`source /gluster/share/geant4/geant4.9.6.p03/geant4.9.6.p03-install/share/Geant4-9.6.3/geant4make/geant4make.sh`  
+`source /gluster/share/share_root6_ssd01.sh`  
+
+## Make build directory
+`mkdir ../build`  
+`cd ../build`  
 
 ## Compile
-Edit GNUMakefile if needed and then do  
+Edit CMakeLists.txt if needed and then do  
+`cmake -DGeant4_DIR=/disk/ssd01/share_ssd01/geant4/geant4.10.03.p01/geant4.10.03.p01-install/lib64/Geant4-10.3.1 ../detectorSimulation`  
 `make`  
 
 ## Run 
 To run execution file, do the following command for example  
-`muong2edmsim macro/tmp_track_0.mac`  
+`./muong2edmsim macro/tmp_track_0.mac`  
 Output file name will need to be editted in include/ApplicationManager.hh  
 `  sprintf(filename,"/gluster/data/g2/tyosioka/data/mug2edm.%s.%s.root",buff,tok);`  
 

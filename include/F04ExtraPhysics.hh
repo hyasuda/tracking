@@ -36,8 +36,10 @@
 #include "globals.hh"
 
 #include "G4VPhysicsConstructor.hh"
+//#include "G4VUserPhysicsList.hh"
 
 class F04ExtraPhysics : public G4VPhysicsConstructor
+//class F04ExtraPhysics : public G4VUserPhysicsList
 {
 public:
 

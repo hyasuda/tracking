@@ -80,8 +80,8 @@ void EventAction::EndOfEventAction(const G4Event* evt)
   // get hits
   G4int nhits= hccal-> entries();
   for(G4int idx=0; idx< nhits; idx++) {
-    G4int ich= (*hccal)[idx]-> GetID();
-    G4double edep= (*hccal)[idx]-> GetEdep();
+    //G4int ich= (*hccal)[idx]-> GetID();
+    //G4double edep= (*hccal)[idx]-> GetEdep();
 
   }
 
@@ -116,7 +116,7 @@ void EventAction::EndOfEventAction(const G4Event* evt)
 
   G4ThreeVector pos = application->GetHitPosition();
 
-  G4double hitE = application->GetHitTEnergy();
+  //G4double hitE = application->GetHitTEnergy();
 
   G4double edep = application->GetEdepByEvent();
 
@@ -124,8 +124,8 @@ void EventAction::EndOfEventAction(const G4Event* evt)
 
   int hitInfo=application->GetHitInfo();
   int eventNum=-1;//application->GetEventNum();
-  application->FillDecayNtuple(eventNum);
-  application->FillNtuple(eventNum,hitInfo);
+  application->FillDecayNtuple();
+  application->FillNtuple();
   application->Fill(edep/MeV);
   printf("EndOfEventAction eventNum=%d hitInfo=%d dep=%lf\n",eventNum,hitInfo,edep/MeV);
 

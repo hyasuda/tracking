@@ -42,23 +42,23 @@ void SteppingAction::UserSteppingAction(const G4Step* aStep)
   ApplicationManager::GetApplicationManager();
 
   // get volume of the current step
-  G4VPhysicalVolume* volume 
-  = aStep->GetPreStepPoint()->GetTouchableHandle()->GetVolume();
+  //G4VPhysicalVolume* volume  = aStep->GetPreStepPoint()->GetTouchableHandle()->GetVolume();
   
   // collect energy and track length step by step
-  G4double edep = aStep->GetTotalEnergyDeposit();
+  //G4double edep = aStep->GetTotalEnergyDeposit();
   
-  G4double stepl = 0.;
+  /*G4double stepl = 0.;
   if (aStep->GetTrack()->GetDefinition()->GetPDGCharge() != 0.)
     stepl = aStep->GetStepLength();
+  */
 
   //Get MUon Decay Information
   //procname DecayWithSpin, StepLimiter,Transportation,SynRad
   G4String procName = aStep->GetPostStepPoint()->GetProcessDefinedStep()->GetProcessName();
 
 
-  G4double DEgamma=0; 
-  G4double DEelectron=0; 
+  //G4double DEgamma=0; 
+  //G4double DEelectron=0; 
 
   G4Track* track= aStep->GetTrack();
   G4double gtime_all= track->GetGlobalTime();//nsec
@@ -70,8 +70,8 @@ void SteppingAction::UserSteppingAction(const G4Step* aStep)
 
 
   if(procName == "DecayWithSpin" ){
-     G4Track* track= aStep->GetTrack();
-     G4double gtime_all= track->GetGlobalTime();//nsec
+     track= aStep->GetTrack();
+     gtime_all= track->GetGlobalTime();//nsec
 
      G4ParticleDefinition* pd = aStep->GetTrack()->GetDefinition();
      G4String particlename = pd->GetParticleName();
@@ -83,7 +83,7 @@ void SteppingAction::UserSteppingAction(const G4Step* aStep)
      G4cout << "particlename " << particlename << G4endl;
      G4cout << "stepid " << stepid << G4endl;
      printf("gtime=%f \n",gtime_all);
-     extern G4int DokodemoBango;
+     //extern G4int DokodemoBango;
 
 
      //Get Information
@@ -108,29 +108,35 @@ void SteppingAction::UserSteppingAction(const G4Step* aStep)
      pos = track->GetPosition();//nsec
      TE= track->GetTotalEnergy();
      application->PutDecayValue(eventNum,KE/MeV, TE/MeV,pos, mom, momv, pol,Gtime, Ptime, passID);
-       
+     G4cout << "TE=" << TE << " KE=" << KE << G4endl;
+
      G4TrackVector *secondary =fpSteppingManager->GetfSecondary();
      G4TrackVector::const_iterator p = secondary->begin();
      for ( ; p != secondary->end(); ++p) {
        G4ParticleDefinition *particle = (*p)->GetDefinition();
        G4String particlenameDaughter = particle->GetParticleName();
-       G4cout << "particlenameDaughetr " << particlenameDaughter << G4endl;
-       
+
        KE = (*p)->GetKineticEnergy()/MeV;
        momv =(*p)->GetMomentumDirection();
        mom = (*p)->GetMomentum();
        TE= (*p)->GetTotalEnergy();
        if(particlenameDaughter=="e+"){
 	 passID=1;
-	 printf("KE=%lf\n",KE);
        }
-       if(particlenameDaughter=="nu_e"){
+       else if(particlenameDaughter=="nu_e"){
 	 passID=2;
        }
-       if(particlenameDaughter=="anti_nu_mu"){
+       else if(particlenameDaughter=="anti_nu_mu"){
 	 passID=3;
        }
+       else if(particlenameDaughter=="e-"){
+	 passID=-1;
+       }
 
+       //if(particlenameDaughter!="e-"){
+	 G4cout << "particlenameDaughter " << particlenameDaughter << G4endl;
+	 G4cout << "TE=" << TE << G4endl;
+	 //}
 
        eventNum=application->GetEventNum();
        application->PutDecayValue(eventNum,KE/MeV, TE/MeV,pos, mom, momv, pol,Gtime, Ptime, passID);
@@ -138,8 +144,8 @@ void SteppingAction::UserSteppingAction(const G4Step* aStep)
 
   }else if(procName=="eBrem" || procName == "eIoni" || procName=="annihil" || procName=="msc"
                   || procName=="compt" || procName == "phot" || procName=="conv"  ) {
-    G4Track* track= aStep->GetTrack();
-    G4double gtime_all= track->GetGlobalTime();//nsec
+    track= aStep->GetTrack();
+    gtime_all= track->GetGlobalTime();//nsec
 
     G4ParticleDefinition* pd = aStep->GetTrack()->GetDefinition();
     G4String particlename = pd->GetParticleName();
@@ -149,20 +155,20 @@ void SteppingAction::UserSteppingAction(const G4Step* aStep)
     G4ThreeVector pol ;
     G4ThreeVector momv;
     G4ThreeVector mom ;
-    G4double Ptime ;//nsec
-    G4double Gtime ;//nsec
+    //G4double Ptime ;//nsec
+    //G4double Gtime ;//nsec
     G4ThreeVector pos ;//nsec
-    G4double TE;
+    //G4double TE;
  
     eventNum=application->GetEventNum();
     KE = aStep->GetPreStepPoint()->GetKineticEnergy()/MeV;
     pol = track->GetPolarization();
     momv = track->GetMomentumDirection();
     mom = track->GetMomentum();
-    Ptime = track->GetProperTime();//nsec
-    Gtime = track->GetGlobalTime();//nsec
+    //Ptime = track->GetProperTime();//nsec
+    //Gtime = track->GetGlobalTime();//nsec
     pos = track->GetPosition();//nsec
-    TE= track->GetTotalEnergy();
+    // TE= track->GetTotalEnergy();
     
     G4TrackVector *secondary =fpSteppingManager->GetfSecondary();
     G4TrackVector::const_iterator p = secondary->begin();
@@ -176,8 +182,8 @@ void SteppingAction::UserSteppingAction(const G4Step* aStep)
       KE = (*p)->GetKineticEnergy()/MeV;
       momv =(*p)->GetMomentumDirection();
       mom = (*p)->GetMomentum();
-      TE= (*p)->GetTotalEnergy();
-      Ptime = (*p)->GetProperTime();//nsec
+      //TE= (*p)->GetTotalEnergy();
+      //Ptime = (*p)->GetProperTime();//nsec
       momv = (*p)->GetMomentumDirection();//nsec
       count++; 
       if(particlenameDaughter=="gamma"){

@@ -63,8 +63,7 @@ G4bool BodySD::ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist)
 
 //////***
   // get step information from "PreStepPoint"
-  G4TouchableHistory* touchable=
-    (G4TouchableHistory*)(preStepPoint-> GetTouchable());
+  //G4TouchableHistory* touchable= (G4TouchableHistory*)(preStepPoint-> GetTouchable());
 
   G4TouchableHandle theTouchable = preStepPoint->GetTouchableHandle();
 
@@ -74,17 +73,17 @@ G4bool BodySD::ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist)
   G4int copyNo = theTouchable->GetReplicaNumber();
   G4int motherCopyNo = theTouchable->GetReplicaNumber(1);
   G4Track* track = aStep->GetTrack();
-  G4int stepid = track->GetCurrentStepNumber();
+  //G4int stepid = track->GetCurrentStepNumber();
   G4String particlename = pd->GetParticleName();
   G4ThreeVector deltaposition = aStep->GetDeltaPosition();
-  G4double steplength = aStep->GetStepLength();
+  //G4double steplength = aStep->GetStepLength();
   G4double totaledep = aStep->GetTotalEnergyDeposit();
   G4VPhysicalVolume* physicalvolume = track->GetVolume();
   G4String volumename = physicalvolume->GetName();
   G4LogicalVolume* logicalvolume = physicalvolume->GetLogicalVolume();
   G4Material* material = logicalvolume->GetMaterial();
   G4String materialname = material->GetName();
-  G4double density = material->GetDensity();
+  //G4double density = material->GetDensity();
 
   G4double ptime,gtime,tE,kE;
   G4ThreeVector mom,pos;
@@ -97,9 +96,9 @@ G4bool BodySD::ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist)
   G4double ktmpy = pos.y();
   G4double ktmpz = pos.z();
   G4int pID=0;
-  if(particlename=="e-")pID=1;
-  if(particlename=="e+")pID=2;
-  if(particlename=="gamma")pID=3;
+  if(particlename=="e-")pID=11;
+  if(particlename=="e+")pID=-11;
+  if(particlename=="gamma")pID=22;
   std::ofstream fcpnum("fcopyNo.dat",std::ios::app);
   fcpnum << pID << " " << copyNo << " " << motherCopyNo << " " << ktmpx << " " << ktmpy << " " << ktmpz << G4endl;
   fcpnum.close();
@@ -220,15 +219,14 @@ G4bool BodySD::ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist)
          application->Fill(pos.x()/mm, pos.y()/mm, totaledep/MeV);
 
 
-         G4double CurrenthitE = application->GetHitTEnergy();
+         //G4double CurrenthitE = application->GetHitTEnergy();
          G4double CurrentDepE = application->GetEdepByEvent();
-         G4double CurrentDepEByRun = application->GetEdepByRun();
-         G4int pID=0;
-         if(particlename=="e-")pID=1;
-         if(particlename=="e+")pID=2;
-         if(particlename=="gamma")pID=3;
+         //G4double CurrentDepEByRun = application->GetEdepByRun();
+         if(particlename=="e-")pID=11;
+         if(particlename=="e+")pID=-11;
+         if(particlename=="gamma")pID=22;
          //if(bodyStatus > -1 || bodyTyp==1020){//1010 LeadTangstate, 1020 InnerPipe
-         if((bodyStatus > -1 && pID<=2)|| pID==3 || bodyTyp==1010){//1010 LeadTangstate, 1020 InnerPipe
+         if((bodyStatus > -1 && abs(pID)==11)|| pID==22 || bodyTyp==1010){//1010 LeadTangstate, 1020 InnerPipe
             //if(pID==3){
             //   printf("Body::eventNum=%d pID=%d pos.x=%lf bodyTyp=%d bodyStatus=%d\n",eventNum, pID,pos.x(),bodyTyp,bodyStatus );
             //}

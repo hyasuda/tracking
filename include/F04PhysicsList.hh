@@ -83,13 +83,13 @@ private:
 
     typedef std::vector<G4VPhysicsConstructor*>  PhysicsListVector;
 
-    void SetBuilderList0(G4bool flagHP = false);
-    void SetBuilderList1(G4bool flagHP = false);
-    void SetBuilderList2(G4bool flagHP = false);
-    void SetBuilderList3(G4bool flagHP = false);
-    void SetBuilderList4(G4bool flagHP = false);
-    void SetBuilderList5(G4bool flagHP = false);
-    void SetBuilderList6(G4bool flagHP = false);
+    void SetBuilderList0();
+    void SetBuilderList1();
+    void SetBuilderList2();
+    void SetBuilderList3();
+    void SetBuilderList4();
+    void SetBuilderList5();
+    void SetBuilderList6();
 
     G4double fCutForGamma;
     G4double fCutForElectron;

@@ -3,6 +3,7 @@
 //
 // ====================================================================
 #include "CalHit.hh"
+#include "G4SystemOfUnits.hh"
 
 // allocator
 G4Allocator<CalHit> CalHitAllocator;
