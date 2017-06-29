@@ -5,12 +5,12 @@ This is Geant4 simulation for muon g-2/EDM detector
 
 # git usage
 ## git version
-If your git version is older than 1.7.9, it is recommended to use newer version.  
-In bepp, you can use new version of git (2.13.2) by  
+If your git version is older than 1.7.10, it is recommended to use a newer version.  
+At bepp, you can use a new version of git (2.13.2) by  
 `export PATH=/gluster/share/git/git-2.13.2/bin:$PATH`  
 
 ## Clone git repository to local
-To start git work, the first thing to do is to clone git repositry to your local directory.  
+To start git work, the first thing to do is to clone git repository to your local directory.  
 `git clone https://gitlab.in2p3.fr/yamanaka/detectorSimulation.git`  
 Then, *detectorSimulation* will be created in the current directory.  
 `cd detectorSimulation`  
@@ -26,13 +26,13 @@ To commit these changes to the repository, you need to add them first
 `git add NewFile.txt` 
 
 Then, commit with some comments  
-`git commit -m "edit README and add new file`  
+`git commit -m "edit README and add a new file"`  
 At this stage, these changes are still limited in your local directory.  
 
 Finally, you need to do  
 `git push -u origin master`  
 origin is the name of the remoter server. You don't need to change this usually.  
-master is the one of the default branch. You can make another branch which will be explained later.  
+master is the default branch. You can make another branch which will be explained later.  
 
 ## Check the status
 You can check the status of commit anytime by  
