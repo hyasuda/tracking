@@ -65,7 +65,7 @@ to which you want to merge
 If you don't need the merged branch anymore, you can delete it by  
 `git branch -d mybranch`  
 
-The above operation can be also executed in https://gitlab.in2p3.fr/yamanaka/detectorSimulation/merge_requests
+The above operation can be also executed in https://gitlab.in2p3.fr/yamanaka/detectorSimulation/merge_requests  
 Especially, when you don't have right to merge to a certain branch, you can send a merge request to
 the assigned person.
 
