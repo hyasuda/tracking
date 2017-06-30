@@ -46,7 +46,7 @@ which will obtain changes in master-branch at origin-server.
 
 ## Create a branch
 If you don't want to change the default branch (master) directly, you can make another branch to work.
-You can see the existing branches by  
+You can see the existing branches and where you are by  
 `git branch`  
 If you want to make a new branch, do  
 `git checkout -b mybranch`  
