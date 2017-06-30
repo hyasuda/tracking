@@ -45,14 +45,28 @@ You can obtain them to your local by
 which will obtain changes in master-branch at origin-server.  
 
 ## Create a branch
+If you don't want to change the default branch (master) directly, you can make another branch to work.
+You can see the existing branches by  
+`git branch`  
+If you want to make a new branch, do  
+`git checkout -b mybranch`  
+You can move to an existing branch by  
+`git checkout mybranch`  
+When editing files in another branch, you can do same for `git add` and `git commit`  
+When push changes to the new branch not to the default branch, do  
+`git push -u origin mybranch`  
 
+## Merge a branch
+
+
+---
 
 # detectorSimulation usage
 ## Set enviroment for ROOT and Geant4
 (at bepp)  
-`source /gluster/share/share.sh`  
-`source /gluster/share/geant4/geant4.9.6.p03/geant4.9.6.p03-install/bin/geant4.sh`  
-`source /gluster/share/geant4/geant4.9.6.p03/geant4.9.6.p03-install/share/Geant4-9.6.3/geant4make/geant4make.sh`  
+    source /gluster/share/share.sh  
+    source /gluster/share/geant4/geant4.9.6.p03/geant4.9.6.p03-install/bin/geant4.sh  
+    source /gluster/share/geant4/geant4.9.6.p03/geant4.9.6.p03-install/share/Geant4-9.6.3/geant4make/geant4make.sh  
 
 ## Compile
 Edit GNUMakefile if needed and then do  
