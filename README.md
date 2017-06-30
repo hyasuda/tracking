@@ -57,6 +57,15 @@ When push changes to the new branch not to the default branch, do
 `git push -u origin mybranch`  
 
 ## Merge a branch
+If you want to add changes in your branch to another branch, you can merge it.  
+After pushing all changes in your local directory to your branch at origin server, move to the branch  
+to which you want to merge  
+`git checkout master`  
+`git merge mybranch`  
+If you don't need the merged branch anymore, you can delete it by  
+`git branch -d mybranch`  
+
+The above operation can be also executed in https://gitlab.in2p3.fr/yamanaka/detectorSimulation/merge_requests
 
 
 ---
@@ -64,9 +73,9 @@ When push changes to the new branch not to the default branch, do
 # detectorSimulation usage
 ## Set enviroment for ROOT and Geant4
 (at bepp)  
-    source /gluster/share/share.sh  
-    source /gluster/share/geant4/geant4.9.6.p03/geant4.9.6.p03-install/bin/geant4.sh  
-    source /gluster/share/geant4/geant4.9.6.p03/geant4.9.6.p03-install/share/Geant4-9.6.3/geant4make/geant4make.sh  
+`source /gluster/share/share.sh`  
+`source /gluster/share/geant4/geant4.9.6.p03/geant4.9.6.p03-install/bin/geant4.sh`  
+`source /gluster/share/geant4/geant4.9.6.p03/geant4.9.6.p03-install/share/Geant4-9.6.3/geant4make/geant4make.sh`  
 
 ## Compile
 Edit GNUMakefile if needed and then do  
