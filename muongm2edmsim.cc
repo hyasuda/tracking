@@ -14,8 +14,6 @@
 #include "SteppingAction.hh"
 #include "SteppingVerbose.hh"
 
-#define G4VIS_USE
-
 #ifdef G4VIS_USE
 #include "G4VisExecutive.hh"
 #endif

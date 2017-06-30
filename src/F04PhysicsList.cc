@@ -16,6 +16,7 @@
 #include "G4EmStandardPhysics_option1.hh"
 #include "G4EmStandardPhysics_option2.hh"
 #include "G4EmStandardPhysics_option3.hh"
+#include "MyG4EmStandardPhysics_option4.hh"
 
 //Hiromi Add 2009/08/12
 #include "PhysListEmStandard.hh"
@@ -131,13 +132,14 @@ F04PhysicsList::F04PhysicsList(G4String physicsList) : G4VModularPhysicsList()
 
     // EM physics
     //AddPhysicsList("emstandard");//motomoto atta hitomi1123
-    AddPhysicsList("standard");//changed by ku
-//Hiromi Add SyncRad 2009/08/13
-/*
-  emName = G4String("standard");
-  emPhysicsList = new PhysListEmStandard(emName);
-*/
-//Hiromi Add SyncRad 2009/08/13 END
+    //AddPhysicsList("standard");//changed by ku
+    AddPhysicsList("emstandard_opt4");
+    //Hiromi Add SyncRad 2009/08/13
+    /*
+      emName = G4String("standard");
+      emPhysicsList = new PhysListEmStandard(emName);
+    */
+    //Hiromi Add SyncRad 2009/08/13 END
 
     // Set the default hadronic physics.
     AddPhysicsList(physicsList);
@@ -363,6 +365,12 @@ void F04PhysicsList::AddPhysicsList(const G4String& name)
        fEMPhysics->push_back(new F04ExtraPhysics());
 //       fEMPhysics->push_back(new F04OpticalPhysics());
 
+    } else if (name == "emstandard_opt4") {
+      
+      ClearEMPhysics();
+      fEMPhysics->push_back(new MyG4EmStandardPhysics_option4());
+      fEMPhysics->push_back(new F04ExtraPhysics());
+      
     } else if (name == "standardSS") {
 
        ClearEMPhysics();

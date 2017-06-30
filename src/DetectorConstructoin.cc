@@ -344,10 +344,10 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter()
 
   //G4double pi = TMath::Pi();
   G4int vane_num = 24;
-  std::vector<G4RotationMatrix *> rotvu;
-  std::vector<G4RotationMatrix *> rotvd;
-    //G4RotationMatrix* rotvu = new G4RotationMatrix[vane_num];
-    //G4RotationMatrix* rotvd = new G4RotationMatrix[vane_num];
+  //std::vector<G4RotationMatrix *> rotvu;
+  //std::vector<G4RotationMatrix *> rotvd;
+  G4RotationMatrix* rotvu[24];
+  G4RotationMatrix* rotvd[24];
   
   G4double d_center = 96.;
   G4double vvaneW = 217.5;
@@ -401,8 +401,9 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter()
 				  "vvane");
   
   for(int ii=0; ii<vane_num; ii++){
-    rotvu.push_back(new G4RotationMatrix());
     G4double rangle = (G4double)2.*pi/vane_num*ii;
+    rotvu[ii] = new G4RotationMatrix();
+    //rotvu.push_back(new G4RotationMatrix());
     rotvu[ii]->rotateZ(-rangle*rad);
     //rotvu[ii]->rotateY(0.01*rad);
     phys_vvane = new G4PVPlacement(rotvu[ii],
@@ -414,8 +415,8 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter()
 				   logicFrame,
 				   false,
 				   ii);
-    rotvd.push_back(new G4RotationMatrix());
-
+    //rotvd.push_back(new G4RotationMatrix());
+    rotvd[ii] = new G4RotationMatrix();
     rotvd[ii]->rotateX(pi*rad);
     //rotvd[ii]->rotateY(0.01*rad);
     rotvd[ii]->rotateZ(rangle*rad);
@@ -744,6 +745,7 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter()
   //always return the physical World
   //
 
+  /*
   for(unsigned int i=0; i<rotvu.size(); i++){
     delete rotvu.at(i);
   }
@@ -752,6 +754,7 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter()
   }
   rotvu.clear();
   rotvd.clear();
+  */
 
   return physiWorld;
 }
