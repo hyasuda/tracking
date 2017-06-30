@@ -132,8 +132,8 @@ F04PhysicsList::F04PhysicsList(G4String physicsList) : G4VModularPhysicsList()
 
     // EM physics
     //AddPhysicsList("emstandard");//motomoto atta hitomi1123
-    //AddPhysicsList("standard");//changed by ku
-    AddPhysicsList("emstandard_opt4");
+    AddPhysicsList("standard");//changed by ku
+    //AddPhysicsList("emstandard_opt4");
     //Hiromi Add SyncRad 2009/08/13
     /*
       emName = G4String("standard");

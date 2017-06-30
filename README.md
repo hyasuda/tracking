@@ -23,3 +23,8 @@ To run execution file, do the following command for example
 Output file name will need to be editted in include/ApplicationManager.hh  
 `  sprintf(filename,"/gluster/data/g2/tyosioka/data/mug2edm.%s.%s.root",buff,tok);`  
 
+## Visualization
+To enable OpenGL visualization, set  
+`export G4VIS_USE=1`  
+and do `make`
+You can use /vis/viwer command in interactive mode of _muong2edmsim_  

@@ -215,7 +215,7 @@ void MyG4EmStandardPhysics_option4::ConstructProcess()
   G4hMultipleScattering* hmsc = new G4hMultipleScattering("ionmsc");
 
   // energy limits for e+- scattering models
-  G4double highEnergyLimit = 300*MeV;
+  G4double highEnergyLimit = 300*MeV; // changed from 100*MeV
   // energy limits for e+- ionisation models
   G4double penEnergyLimit = 1*MeV;
 
