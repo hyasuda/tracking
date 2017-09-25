@@ -74,8 +74,8 @@ G4bool BodySD::ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist)
 //////***
 
   G4ParticleDefinition* pd = aStep->GetTrack()->GetDefinition();
-  G4int copyNo = theTouchable->GetReplicaNumber();
-  G4int motherCopyNo = theTouchable->GetReplicaNumber(1);
+  //G4int copyNo = theTouchable->GetReplicaNumber();
+  //G4int motherCopyNo = theTouchable->GetReplicaNumber(1);
   G4Track* track = aStep->GetTrack();
   //G4int stepid = track->GetCurrentStepNumber();
   G4String particlename = pd->GetParticleName();
@@ -95,23 +95,20 @@ G4bool BodySD::ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist)
   G4int  hitInfo=application->GetHitInfo();
   G4String procName = aStep->GetPostStepPoint()->GetProcessDefinedStep()->GetProcessName();
 
+  /*
   pos = track->GetPosition();
   G4double ktmpx = pos.x();
   G4double ktmpy = pos.y();
   G4double ktmpz = pos.z();
+  */
   G4int pID=0;
-  if(particlename=="e-")pID=11;
-  if(particlename=="e+")pID=-11;
-  if(particlename=="gamma")pID=22;
-  std::ofstream fcpnum("fcopyNo.dat",std::ios::app);
+  /*std::ofstream fcpnum("fcopyNo.dat",std::ios::app);
   fcpnum << pID << " " << copyNo << " " << motherCopyNo << " " << ktmpx << " " << ktmpy << " " << ktmpz << G4endl;
-  fcpnum.close();
+  fcpnum.close();*/
 
-  //G4cout << "Volume = " << volumename << " ProcessName = " << procName << " TrackID = " << track->GetTrackID() << " ParentID = " << track->GetParentID() << " " << particlename << " TotalEnergy = " << track->GetTotalEnergy() << " (x,y,z) = " << 
-  //"(" << track->GetPosition().x() << ", " << track->GetPosition().y() << ", " << track->GetPosition().z() << ")" << G4endl;
-      
-
-  bodyTyp=-1;
+  bodyTyp = 201;
+  
+  /*bodyTyp=-1;
   if(volumename=="Frame")bodyTyp=100; 
   if(volumename=="testMaterial")bodyTyp=101; 
   if(volumename=="BoxDetector")bodyTyp=102;//No material 
@@ -178,20 +175,11 @@ G4bool BodySD::ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist)
     //  printf("ppp\n");getchar();
   }
   if(volumename=="CenterInP")bodyTyp=1020;//InnerPipe
-  
-  //G4cout << volumename << G4endl;
+  */
 
   bodyStatus=0;
-  chID=-1;//not yet hiromi 2010/05/25
-  //if((bodyTyp==100 || (bodyTyp>200 && bodyTyp<1000)) && (particlename=="e+" || particlename=="e-")){
-  
-  //if(bodyTyp==100 || bodyTyp>200  ){
-  //  if(pointIn==fGeomBoundary || pointOut==fGeomBoundary || bodyTyp>1000){//with Toshito 2010/03/31
-  //if(bodyTyp==100 || (bodyTyp>200 && bodyTyp<1000) || bodyTyp==1020   ){
-  //if(pointIn==fGeomBoundary || pointOut==fGeomBoundary ){//with Toshito 2010/03/31
+
   if(volumename=="sensor"){
-    //if(bodyTyp!=100 && pointIn==fGeomBoundary && pointOut != fGeomBoundary)bodyStatus=0; 
-    //if(bodyTyp!=100 && pointOut==fGeomBoundary && pointIn != fGeomBoundary)bodyStatus=1;//hiromi 2010/05/25
     if( pointIn==fGeomBoundary || pointIn==fAlongStepDoItProc || pointIn==fUndefined ) bodyStatus += 0x01;
     if( pointOut==fGeomBoundary || pointOut==fAlongStepDoItProc ) bodyStatus += 0x02;
 
@@ -204,15 +192,11 @@ G4bool BodySD::ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist)
     tE= track->GetTotalEnergy();
     kE = track->GetKineticEnergy();
     
-    /////**
-    // accumulate energy deposit in each scintillator
-    //G4int id= touchable-> GetReplicaNumber(1);//strip, etc in the future
     G4int id= bodyTyp;
     if(id<0)id=0;
     if(id>=2000)id=1999;
     //edepbuf[id]+= aStep-> GetTotalEnergyDeposit();
     edepbuf[id]+= pos.x()/mm;
-    /////**
     
     application->SetHitPosition(pos);
     application->SetHitMomentum(mom);
@@ -226,34 +210,24 @@ G4bool BodySD::ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist)
     
     application->Fill(pos.x()/mm, pos.y()/mm, totaledep/MeV);
 
-    if(particlename=="e+"){
-      //G4cout << "StepPoint = " << pointIn << " " << pointOut << " procName = " << procName << " edep = " << totaledep << " stepLength = " << steplength << G4endl;
-      //G4cout << "prePos = " << preStepPoint->GetPosition().x() << " postPos = " << postStepPoint->GetPosition().x() << G4endl;
-      //G4cout << "trackPos = " << track->GetPosition().x() << G4endl;
-    }
-    
     G4int isPrimary = 0;
     G4int trackID = track->GetTrackID();
-    //G4double CurrenthitE = application->GetHitTEnergy();
-    G4double CurrentDepE = application->GetEdepByEvent();
-    //G4double CurrentDepEByRun = application->GetEdepByRun();
-    if(particlename=="e-")pID=11;
+    //G4double CurrentDepE = application->GetEdepByEvent();
+
+    if(particlename=="e-") pID=11;
     else if(particlename=="e+"){
       pID=-11;
       if( track->GetTrackID()==application->GetPositronID() ){
 	isPrimary = 1;
       }
-    }else if(particlename=="gamma")pID=22;
+    }else if(particlename=="gamma") pID=22;
     
-    //G4cout << particlename << " StepPoint = " << pointIn << " " << pointOut << " procName = " << procName << " trackID = " << trackID << " parentID = " << track->GetParentID() << G4endl;
-
     if(pointIn==fGeomBoundary || pointIn==fUndefined || pointIn==fAlongStepDoItProc){
       currentTotalDepE = totaledep;
       unsummedDepE = totaledep;
       steplengthTotal = steplength;
-      if( currentTrackID!=0 ) G4cout << "trackID is not reset" << G4endl;
+      //if( currentTrackID!=0 ) G4cout << "trackID is not reset" << G4endl;
       currentTrackID = trackID;
-      //G4cout << "In by track = " << trackID << G4endl;
     }
     else{
       currentTotalDepE += totaledep;
@@ -265,16 +239,8 @@ G4bool BodySD::ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist)
       currentTrackID = 0;
     }   
     
-    //if(bodyStatus > -1 || bodyTyp==1020){//1010 LeadTangstate, 1020 InnerPipe
-    //if((bodyStatus > -1 && abs(pID)==11)|| pID==22 || bodyTyp==1010){//1010 LeadTangstate, 1020 InnerPipe
-    if(bodyStatus > 0 ){
-    //if(bodyStatus >= 0 ){
-      //if(pID==3){
-      //   printf("Body::eventNum=%d pID=%d pos.x=%lf bodyTyp=%d bodyStatus=%d\n",eventNum, pID,pos.x(),bodyTyp,bodyStatus );
-      //}
-      //application->PutNtupleValue(pID,kE/MeV, tE/MeV, pos/mm, mom, gtime, ptime, bodyTyp, bodyStatus, chID, eventNum, hitInfo,CurrentDepE/MeV,totaledep/MeV,isPrimary,trackID);
+    if(bodyStatus > 0 && unsummedDepE>0.){
       application->PutNtupleValue(pID,kE/MeV, tE/MeV, pos/mm, mom, gtime, ptime, bodyTyp, bodyStatus, chID, eventNum, hitInfo, currentTotalDepE/MeV,unsummedDepE/MeV,isPrimary,trackID);
-      //application->PutNtupleValue(pID,kE/MeV, tE/MeV, pos/mm, mom, gtime, ptime, bodyTyp, bodyStatus, chID, eventNum, hitInfo, currentTotalDepE/MeV,totaledep/MeV,isPrimary,trackID,steplength/mm,steplengthTotal/mm);
       unsummedDepE = 0.;
     }
   }

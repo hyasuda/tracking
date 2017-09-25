@@ -130,7 +130,7 @@ int main(int argc,char** argv)
 #endif
 
       //      UI->ApplyCommand("/control/execute vis3.mac");
-      UI->ApplyCommand("/control/execute originvis.mac");
+      UI->ApplyCommand("/control/execute macro/originvis.mac");
       session->SessionStart();
       delete session;
       

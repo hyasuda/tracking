@@ -88,8 +88,8 @@ class ApplicationManager
     std::vector<double> tEnergy;
     std::vector<int> fIsPrimary;
     std::vector<int> fTrackID;
-  std::vector<double> fStepLength;
-  std::vector<double> fStepLengthTotal;
+  //std::vector<double> fStepLength;
+  //std::vector<double> fStepLengthTotal;
 
     float DkEnergy[4];
     float Dpol_x;
@@ -107,7 +107,7 @@ class ApplicationManager
     float Dpos_y;
     float Dpos_z;
     float DtEnergy[4];
-    float TotDep;
+  //    float TotDep;
     int   DPDG[4];
 
   public:
@@ -392,8 +392,8 @@ inline void ApplicationManager::Save()
 {
   file->cd();
   printf("writen ROOT File\n"); 
-  theEdepHist->Write();
-  theHitHist->Write();
+  //theEdepHist->Write();
+  //theHitHist->Write();
   ntupleBody->Write();
   ntupleDecay->Write();
   file->Close();
@@ -430,19 +430,17 @@ inline void ApplicationManager::ClearNtuple(G4int evtNum)
     DPDG[i] = 0;
  }
 
-//  printf("before---pID.size()=%d pos_x.size()=%d\n",pID.size(),pos_x.size());
-
-  kEnergy.clear();
+  //kEnergy.clear();
   EachDepE.clear();
   CurrentDepE.clear();
   fPID.clear();
   bodyTyp.clear();
   bodyStatus.clear();
-  chID.clear();
+  //chID.clear();
   mom_x.clear();
   mom_y.clear();
   mom_z.clear();
-  ptime.clear();//nsec
+  //ptime.clear();//nsec
   gtime.clear();//nsec
   pos_x.clear();
   pos_y.clear();
@@ -450,15 +448,12 @@ inline void ApplicationManager::ClearNtuple(G4int evtNum)
   tEnergy.clear();
   fIsPrimary.clear();
   fTrackID.clear();
-  fStepLength.clear();
-  fStepLengthTotal.clear();
+  //fStepLength.clear();
+  //fStepLengthTotal.clear();
 
   fHitInfo=0;
-
   theHitInfo=0;
-//  printf("ApplicationManager.hh::Clear eventNum=%d\n",eventNum);
-//  printf("after---pID.size()=%d pos_x.size()=%d\n",pID.size(),pos_x.size());
-//  getchar();
+
   return;
 }
 
@@ -466,7 +461,6 @@ inline void ApplicationManager::ClearNtuple(G4int evtNum)
 inline void ApplicationManager::PutDecayValue(G4int evtNum,G4double DKEnergy, G4double DTEnergy, 
 G4ThreeVector Dpos, G4ThreeVector Dmom, G4ThreeVector Dmomv, G4ThreeVector Dpol,G4double DGtime, G4double DPtime, G4int passID)
 {
-  //printf("passID=%d\n",passID);
   if(passID<0 || passID>3) return;
 
   if(passID==0){//mu+
@@ -500,21 +494,11 @@ G4ThreeVector Dpos, G4ThreeVector Dmom, G4ThreeVector Dmomv, G4ThreeVector Dpol,
 
 }
 inline void ApplicationManager::PutNtupleValue(G4int parID, G4double KEnergy, G4double TEnergy, 
-					       G4ThreeVector pos, G4ThreeVector mom, G4double Gtime, G4double Ptime, G4int bodyType, G4int bodyStat, G4int chNum, G4int evtNum, G4int hitInformation,G4double DepEByEve,G4double eachDepE,G4int isPrimary, G4int trackID/*, G4double stepLength, G4double stepLengthTotal*/)
+					       G4ThreeVector pos, G4ThreeVector mom, G4double Gtime, G4double Ptime, G4int bodyType, G4int bodyStat, G4int chNum, G4int evtNum, G4int hitInformation,G4double DepEByEve,G4double eachDepE,G4int isPrimary, G4int trackID)
 {
  
- fHitInfo=hitInformation;
-//if(hitInfo<16){
+  fHitInfo=hitInformation;
   fEventNum= evtNum;
-
-//  printf("putNtupleValue-----------------\n");
-//  printf("hitInformation=%d evtNum=%d\n",hitInformation,evtNum);
-//  printf("bodyTyp=%d bodyStatus=%d\n",bodyType,bodyStat);
- // printf("Ptime=%lf Gtime=%lf\n",Ptime,Gtime);
- //printf("KEnergy=%lf TEnergy=%lf\n",KEnergy,TEnergy);
- // printf("mom=%lf %lf %lf\n",mom.x(),mom.y(),mom.z());
- //printf("pos=%lf %lf %lf\n",pos.x(),pos.y(),pos.z());
-//  printf("pID.size()=%d\n",pID.size());
 
   CurrentDepE.push_back(DepEByEve/MeV);
   EachDepE.push_back(eachDepE/MeV);
@@ -534,14 +518,7 @@ inline void ApplicationManager::PutNtupleValue(G4int parID, G4double KEnergy, G4
   tEnergy.push_back(TEnergy/MeV);
   fIsPrimary.push_back(isPrimary);
   fTrackID.push_back(trackID);
-  //fStepLength.push_back(stepLength);
-  //fStepLengthTotal.push_back(stepLengthTotal);
 
- // printf("putNtupleValue-----------------\n");
- // printf("ApplicationManager.hh::Put hitInfo=%d kE=%lf tE=%lf pos=%lf %lf %lf mom=%lf %lf %lf\n",hitInfo,
- //            kEnergy[hitInfo],tEnergy[hitInfo],pos_x[hitInfo],pos_y[hitInfo],pos_z[hitInfo],mom_x[hitInfo],mom_y[hitInfo],mom_z[hitInfo]);
- // getchar();
-//}
   return;
 
 }

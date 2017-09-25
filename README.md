@@ -20,7 +20,7 @@ or set paths to the following software
 
 ## Compile
 Edit CMakeLists.txt if needed and then do  
-(at bepp)
+(at bepp)  
 `cmake -DGeant4_DIR=/disk/ssd01/share_ssd01/geant4/geant4.10.03.p01/geant4.10.03.p01-install/lib64/Geant4-10.3.1 ../detectorSimulation`  
 `make`  
 

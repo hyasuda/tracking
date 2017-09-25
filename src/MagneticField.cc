@@ -95,7 +95,6 @@ void MagneticField::updateField()
 
 }
 
-//void MagneticField::GetFieldValue( const G4double Point[3],G4double* Bfield ) const
 void MagneticField::GetFieldValue( const G4double Point[4],G4double* Bfield ) const
 {
   // Point[0],Point[1],Point[2] are x-, y-, z-cordinates 
@@ -108,7 +107,6 @@ void MagneticField::GetFieldValue( const G4double Point[4],G4double* Bfield ) co
   //gamma=5;
   //beta=sqrt(1-1/(double)pow(gamma,2));
 
-  //double pi=TMath::Pi();
   double Ex,Ey;
  
   double posR=sqrt(pow(Point[0],2)+pow(Point[1],2));
@@ -130,8 +128,6 @@ void MagneticField::GetFieldValue( const G4double Point[4],G4double* Bfield ) co
   Bfield[3]=Ex;
   Bfield[4]=Ey;
   Bfield[5]=0;
-
-  //G4cout << "Bz = " << Bfield[2] << G4endl;
 
   return;
 }

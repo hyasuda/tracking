@@ -57,9 +57,6 @@ void SteppingAction::UserSteppingAction(const G4Step* aStep)
   G4String procName = aStep->GetPostStepPoint()->GetProcessDefinedStep()->GetProcessName();
 
 
-  //G4double DEgamma=0; 
-  //G4double DEelectron=0; 
-
   G4Track* track= aStep->GetTrack();
   G4double gtime_all= track->GetGlobalTime();//nsec
 
@@ -139,11 +136,6 @@ void SteppingAction::UserSteppingAction(const G4Step* aStep)
        else if(particlenameDaughter=="e-"){
 	 passID=-1;
        }
-
-       //if(particlenameDaughter!="e-"){
-       G4cout << "particlenameDaughter " << particlenameDaughter << G4endl;
-	 G4cout << "TE=" << TE << G4endl;
-	 //}
 
        eventNum=application->GetEventNum();
        application->PutDecayValue(eventNum,KE/MeV, TE/MeV,pos, mom, momv, pol,Gtime, Ptime, passID);

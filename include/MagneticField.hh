@@ -35,7 +35,6 @@ class MagneticField
     ~MagneticField();
 
   public:
-  //void GetFieldValue( const G4double Point[3],  G4double* Bfield ) const;
     void GetFieldValue( const G4double Point[4],  G4double* Bfield ) const;
 
 private:

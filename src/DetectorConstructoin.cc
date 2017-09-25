@@ -104,7 +104,7 @@ U->AddIsotope(U8, abundance= 10.*perCent);
 //
 G4Material* Al = new G4Material("Aluminium", z=13., a=26.98*g/mole, density=2.699*g/cm3);
 //G4Material* LAr = new G4Material("liquidArgon", z=18., a= 39.95*g/mole, density= 1.390*g/cm3);
-//G4Material* PurePb = new G4Material("Lead", z=82., a= 207.19*g/mole, density= 11.35*g/cm3);
+G4Material* PurePb = new G4Material("Lead", z=82., a= 207.19*g/mole, density= 11.35*g/cm3);
 //G4Material* Fe = new G4Material("Fe", z= 26., a= 55.83*g/mole, density = 7.874*g/cm3);
 //Fe;7874 kg/m3, 7.09E-6 m3/mol
 G4Material* PureSi = new G4Material("Si", z= 14., a= 28.09*g/mole, density = 2.33*g/cm3);
@@ -283,9 +283,8 @@ G4cout << *(G4Material::GetMaterialTable()) << G4endl;
  defaultMaterial  = Vacuum;
  sensorMat = PureSi;
  subMat = G10_Plate;
- tubeMat = LeadTangstate;
- //tubeMat = Vacuum;
- //defaultMaterial1  = PurePb; 
+ //tubeMat = LeadTangstate;
+ tubeMat = PurePb;
  defaultMaterial1  = Al; 
  defaultMaterial2  = Air;
  defaultMaterial3  = WPb;
@@ -358,14 +357,10 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter()
                                  0);			
 
 
-  //G4double pi = TMath::Pi();
-  //G4int vane_num = 24;
-
-  G4double d_center = 96.;
+  //G4double d_center = 96.;
+  G4double d_center = 150.;
   G4double vvaneW = 217.5;
   G4double vvaneT = 6.;
-  //G4double vvaneT = 10.;
-  //G4double vvaneT = 14.;
   G4double vvaneH = 350.;
   G4double r_vane = 0.5*d_center + 0.5*vvaneW;
   
@@ -403,8 +398,6 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter()
 
   G4double frameW = subH2;
   G4double frameT = 4.;
-  //G4double frameT = 8.;
-  //G4double frameT = 12.;
   G4double frameH = subH2;
 
 
@@ -464,7 +457,6 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter()
     if (ii/4==0){ iy = 1;} else { iy = -1;} 
     if ((ii/2)%2==0){ iz = 1;} else { iz = -1;} 
     
-    //    std::cout << ii << " " << ix << " " << iy << " " << iz << std::endl;
     phys_sensor1 = new G4PVPlacement(0,
 				     G4ThreeVector((xcenter + ix*splusd)*mm,
 						   iy*0.5*frameT,
@@ -668,14 +660,10 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter()
   //
   // --- Center tube
   //
-  /*
-  G4double tube_din = 88.;
-  G4double tube_dout = 138.;
-  G4double tubeH = 500.;
-  */
-  G4double tube_din = 46.;
-  G4double tube_dout = 96.;
-  G4double tubeH = 700.;
+  
+  G4double tube_din = 120.;
+  G4double tube_dout = 130.;
+  G4double tubeH = 440.;
 
   sol_tube = new G4Tubs("tube",tube_din/2*mm,tube_dout/2*mm,tubeH/2*mm,
 			0.*deg,360.*deg);
@@ -694,8 +682,11 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter()
   //
   // --- polyimide window
   //
-  G4double window_din = 218.*2.+tube_dout;
-  G4double window_dout = 218.2*2.+tube_dout;
+  //G4double window_din = 218.*2.+tube_dout;
+  //G4double window_dout = 218.2*2.+tube_dout;
+  G4double window_din = 300.*2;
+  G4double window_dout = 300.2*2.;
+
   G4double windowH = 200.;
   sol_window = new G4Tubs("window",window_din/2*mm,window_dout/2*mm,windowH/2*mm,
 			0.*deg,360.*deg);
@@ -762,17 +753,6 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter()
   //always return the physical World
   //
 
-  /*
-  for(unsigned int i=0; i<rotvu.size(); i++){
-    delete rotvu.at(i);
-  }
-  for(unsigned int i=0; i<rotvd.size(); i++){
-    delete rotvd.at(i);
-  }
-  rotvu.clear();
-  rotvd.clear();
-  */
-
   return physiWorld;
 }
 
@@ -788,7 +768,6 @@ void DetectorConstruction::SetMagField(/*G4double fieldValue*/)
 {
 
   //apply a global uniform magnetic field along Z axis
-
   
   G4FieldManager* fieldMgr
    = G4TransportationManager::GetTransportationManager()->GetFieldManager();
