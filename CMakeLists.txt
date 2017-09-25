@@ -62,6 +62,11 @@ endif()
 #
 set(MUONGM2EDMSIM_SCRIPTS
   macro/tmp_track_0.mac
+  macro/originvis.mac
+  FLDATA/20160422_Abe2017May-5.txt
+  FLDATA/20160422_Abe2017May-7.txt
+  FLDATA/20160422_Abe2017May-77.txt
+  FLDATA/20160422_cm12weak.txt
   )
 
 foreach(_script ${MUONGM2EDMSIM_SCRIPTS})
