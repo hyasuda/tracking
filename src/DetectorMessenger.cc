@@ -22,13 +22,15 @@ DetectorMessenger::DetectorMessenger(DetectorConstruction* Det)
   UpdateCmd->SetGuidance("This command MUST be applied before \"beamOn\" ");
   UpdateCmd->SetGuidance("if you changed geometrical value(s).");
   UpdateCmd->AvailableForStates(G4State_Idle);
-      
+  
+  
   MagFieldCmd = new G4UIcmdWithADoubleAndUnit("/mu/det/setField",this);  
   MagFieldCmd->SetGuidance("Define magnetic field.");
   MagFieldCmd->SetGuidance("Magnetic field will be in Z direction.");
   MagFieldCmd->SetParameterName("Bz",false);
   MagFieldCmd->SetUnitCategory("Magnetic flux density");
   MagFieldCmd->AvailableForStates(G4State_PreInit,G4State_Idle);  
+  
 }
 
 

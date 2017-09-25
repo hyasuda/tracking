@@ -23,7 +23,7 @@ class DetectorConstruction : public G4VUserDetectorConstruction
 {
   public:
   
-    DetectorConstruction();
+    DetectorConstruction(const G4int nvane=24);
    ~DetectorConstruction();
 
   public:
@@ -69,7 +69,8 @@ class DetectorConstruction : public G4VUserDetectorConstruction
   G4Box*             sol_vvane;    
   G4LogicalVolume*   log_vvane;    
   G4VPhysicalVolume* phys_vvane; 
-  
+  G4int              fNvane;
+
   G4Box*             sol_sensor;    
   G4LogicalVolume*   log_sensor;    
   G4VPhysicalVolume* phys_sensor; 

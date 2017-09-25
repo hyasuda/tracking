@@ -6,6 +6,7 @@
 #include "G4MagneticField.hh"
 //#include "G4Mag_SpinEqRhs.hh"
 #include "G4EqEMFieldWithSpin.hh"
+#include "G4EqMagElectricField.hh"
 #include "G4MagIntegratorStepper.hh"
 #include "G4ChordFinder.hh"
 #include "G4PropagatorInField.hh"
@@ -20,7 +21,8 @@ class MagneticField
   //G4Mag_SpinEqRhs* fEquation;
   G4ChordFinder* fChordFinder;
   G4MagIntegratorStepper* pStepper;
-  G4EqEMFieldWithSpin* fEquation;
+  //G4EqEMFieldWithSpin* fEquation;
+  G4EqMagElectricField* fEquation;
   G4PropagatorInField*    fieldPropagator;
 
   void updateField();
@@ -33,7 +35,8 @@ class MagneticField
     ~MagneticField();
 
   public:
-    void GetFieldValue( const G4double Point[3],  G4double* Bfield ) const;
+  //void GetFieldValue( const G4double Point[3],  G4double* Bfield ) const;
+    void GetFieldValue( const G4double Point[4],  G4double* Bfield ) const;
 
 private:
   static MagneticField* object;

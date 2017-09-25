@@ -37,6 +37,10 @@ class BodySD
   private:
      CalHitsCollection* hitsCollection;
      G4double edepbuf[NCHANNEL];
+     G4int currentTrackID;
+     G4double currentTotalDepE;
+     G4double unsummedDepE;
+     G4double steplengthTotal;
 };
 
 #endif

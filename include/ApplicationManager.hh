@@ -56,6 +56,7 @@ class ApplicationManager
     G4int theHitBodyTyp;
     G4int theHitInfo;
     G4int theEventNum;
+    G4int thePositronID;
     std::ofstream theFileStream;
 
   private:
@@ -85,7 +86,10 @@ class ApplicationManager
     std::vector<double> pos_y;
     std::vector<double> pos_z;
     std::vector<double> tEnergy;
-
+    std::vector<int> fIsPrimary;
+    std::vector<int> fTrackID;
+  std::vector<double> fStepLength;
+  std::vector<double> fStepLengthTotal;
 
     float DkEnergy[4];
     float Dpol_x;
@@ -104,6 +108,7 @@ class ApplicationManager
     float Dpos_z;
     float DtEnergy[4];
     float TotDep;
+    int   DPDG[4];
 
   public:
     ApplicationManager();
@@ -125,6 +130,7 @@ class ApplicationManager
     G4int GetHitInfo() const;
     G4int GetHitBody() const;
     G4int GetParID() const;
+    G4int GetPositronID() const;
     std::ofstream& GetFileStream();
     void SetEdepByEvent(G4double edep);
     void SetEdepByRun(G4double edep);
@@ -138,6 +144,7 @@ class ApplicationManager
     void SetHitPtime(G4double Ptime);
     void SetHitBody(G4int theHitBodyTyp);
     void SetParID(G4int theParID);
+    void SetPositronID(G4int trackID);
 
     void AddEdepByEvent(G4double edep);
     void AddEdepByRun(G4double edep);
@@ -155,7 +162,7 @@ class ApplicationManager
     void FillNtuple(); 
     void FillDecayNtuple(); 
     void PutNtupleValue(G4int pID,G4double kE, G4double tE, G4ThreeVector pos, G4ThreeVector mom, 
-              G4double Gtime, G4double Ptime, G4int bodyTyp, G4int bodyStatus, G4int chID, G4int evtNum, G4int hitInfo, G4double CurrentDepE, G4double EachDepE);
+			G4double Gtime, G4double Ptime, G4int bodyTyp, G4int bodyStatus, G4int chID, G4int evtNum, G4int hitInfo, G4double CurrentDepE, G4double EachDepE, G4int isPrimary, G4int trackID/*, G4double stepLength, G4double stepLengthTotal*/);
     void PutDecayValue(G4int evtNum,G4double DKEnergy, G4double DTEnergy, G4ThreeVector Dpos, G4ThreeVector Dmom, 
               G4ThreeVector Dmomv, G4ThreeVector Dpol,G4double DGtime, G4double DPtime, G4int passID);
     void ClearNtuple(G4int eventNum); 
@@ -233,6 +240,10 @@ inline G4int ApplicationManager::GetParID() const
 {
   return theParID;
 }
+inline G4int ApplicationManager::GetPositronID() const
+{
+  return thePositronID;
+}
 
 inline void ApplicationManager::SetEdepByEvent(G4double edep)
 {
@@ -304,6 +315,11 @@ inline void ApplicationManager::SetParID(G4int pID)
   theParID = pID;
   return;
 }
+inline void ApplicationManager::SetPositronID(G4int trackID)
+{
+  thePositronID = trackID;
+  return;
+}
 
 inline void ApplicationManager::AddEdepByEvent(G4double edep)
 {
@@ -353,25 +369,19 @@ inline void ApplicationManager::Clear()
 
 inline void ApplicationManager::Open()
 {
- // TFile* file = 
-   // new TFile( filename.c_str(), "RECREATE", "Geant4 User Application" );
-  //    file= new TFile( "testTest.root", "RECREATE", "Geant4 User Application" );
-// 170113tyosioka
+  // 170113tyosioka
   time_t now = time(NULL);
   struct tm *pnow = localtime(&now);
   char buff[128]="";
   sprintf(buff,"%04d%02d%02d%02d%02d%02d",pnow->tm_year+1900,pnow->tm_mon + 1,pnow->tm_mday,pnow->tm_hour,pnow->tm_min,pnow->tm_sec);
-  //  printf(buff);
 
   char hostname[128];
   gethostname(hostname, sizeof(hostname));
   char del[] = ".";
   char *tok;
   tok = strtok(hostname,del);
-  //  printf(tok);
 
   char filename[256];
-  //sprintf(filename,"/gluster/data/g2/tyosioka/data/mug2edm.%s.%s.root",buff,tok);
   sprintf(filename,"data/mug2edm_%s_%s.root",buff,tok);
 
   file= new TFile( filename, "RECREATE", "Geant4 User Application" );
@@ -380,10 +390,6 @@ inline void ApplicationManager::Open()
 
 inline void ApplicationManager::Save()
 {
- // TFile* file = 
-   // new TFile( filename.c_str(), "RECREATE", "Geant4 User Application" );
- //   new TFile( "testTest.root", "RECREATE", "Geant4 User Application" );
-
   file->cd();
   printf("writen ROOT File\n"); 
   theEdepHist->Write();
@@ -421,6 +427,7 @@ inline void ApplicationManager::ClearNtuple(G4int evtNum)
     Dmom_y[i] = 0;
     Dmom_z[i] = 0;
     DtEnergy[i]= 0;
+    DPDG[i] = 0;
  }
 
 //  printf("before---pID.size()=%d pos_x.size()=%d\n",pID.size(),pos_x.size());
@@ -441,8 +448,10 @@ inline void ApplicationManager::ClearNtuple(G4int evtNum)
   pos_y.clear();
   pos_z.clear();
   tEnergy.clear();
-
-
+  fIsPrimary.clear();
+  fTrackID.clear();
+  fStepLength.clear();
+  fStepLengthTotal.clear();
 
   fHitInfo=0;
 
@@ -480,12 +489,18 @@ G4ThreeVector Dpos, G4ThreeVector Dmom, G4ThreeVector Dmomv, G4ThreeVector Dpol,
   Dmomv_x[passID] = Dmomv.x();
   Dmomv_y[passID] = Dmomv.y();
   Dmomv_z[passID] = Dmomv.z();
+  int PDG = 0;
+  if(passID==0) PDG = -13;
+  else if(passID==1) PDG = -11;
+  else if(passID==2) PDG = 12;
+  else if(passID==3) PDG = -14;
+  DPDG[passID] = PDG;
 
   return;
 
 }
 inline void ApplicationManager::PutNtupleValue(G4int parID, G4double KEnergy, G4double TEnergy, 
-G4ThreeVector pos, G4ThreeVector mom, G4double Gtime, G4double Ptime, G4int bodyType, G4int bodyStat, G4int chNum, G4int evtNum, G4int hitInformation,G4double DepEByEve,G4double eachDepE)
+					       G4ThreeVector pos, G4ThreeVector mom, G4double Gtime, G4double Ptime, G4int bodyType, G4int bodyStat, G4int chNum, G4int evtNum, G4int hitInformation,G4double DepEByEve,G4double eachDepE,G4int isPrimary, G4int trackID/*, G4double stepLength, G4double stepLengthTotal*/)
 {
  
  fHitInfo=hitInformation;
@@ -517,6 +532,10 @@ G4ThreeVector pos, G4ThreeVector mom, G4double Gtime, G4double Ptime, G4int body
   pos_y.push_back(pos.y());
   pos_z.push_back(pos.z());
   tEnergy.push_back(TEnergy/MeV);
+  fIsPrimary.push_back(isPrimary);
+  fTrackID.push_back(trackID);
+  //fStepLength.push_back(stepLength);
+  //fStepLengthTotal.push_back(stepLengthTotal);
 
  // printf("putNtupleValue-----------------\n");
  // printf("ApplicationManager.hh::Put hitInfo=%d kE=%lf tE=%lf pos=%lf %lf %lf mom=%lf %lf %lf\n",hitInfo,

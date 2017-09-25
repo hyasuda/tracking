@@ -1,10 +1,14 @@
 // $Id: MagneticField.cc,v 1.1.1.1 2004/10/06 05:36:32 iwai Exp $
 #include "MagneticField.hh"
 
+#include "G4EqMagElectricField.hh"
+
 #include "G4FieldManager.hh"
 #include "G4TransportationManager.hh"
 
 #include "G4ClassicalRK4.hh"
+#include "G4SimpleHeum.hh"
+
 #include "TMath.h"
 
 #include "G4SystemOfUnits.hh"
@@ -31,8 +35,9 @@ void MagneticField::updateField()
 {
 
   if(fEquation) delete fEquation;//houiken 1007 sasikae
-  fEquation = new G4EqEMFieldWithSpin(this);
+  //fEquation = new G4EqEMFieldWithSpin(this);
   //fEquation = new G4Mag_SpinEqRhs(this);
+  fEquation = new G4EqMagElectricField(this);
 
   //apply a global uniform magnetic field along Z axis
 
@@ -48,7 +53,9 @@ void MagneticField::updateField()
   fieldMgr->SetDetectorField(this);
 
   if(pStepper) delete pStepper;
-  pStepper = new G4ClassicalRK4(fEquation,12);
+  pStepper = new G4ClassicalRK4(fEquation,8);
+  //pStepper = new G4ClassicalRK4(fEquation,12);
+  //pStepper = new G4SimpleHeum(fEquation,12);
 
   //  fieldMgr->CreateChordFinder(this);
 
@@ -88,7 +95,8 @@ void MagneticField::updateField()
 
 }
 
-void MagneticField::GetFieldValue( const G4double Point[3],G4double* Bfield ) const
+//void MagneticField::GetFieldValue( const G4double Point[3],G4double* Bfield ) const
+void MagneticField::GetFieldValue( const G4double Point[4],G4double* Bfield ) const
 {
   // Point[0],Point[1],Point[2] are x-, y-, z-cordinates 
 
@@ -122,6 +130,8 @@ void MagneticField::GetFieldValue( const G4double Point[3],G4double* Bfield ) co
   Bfield[3]=Ex;
   Bfield[4]=Ey;
   Bfield[5]=0;
+
+  //G4cout << "Bz = " << Bfield[2] << G4endl;
 
   return;
 }

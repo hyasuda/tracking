@@ -68,6 +68,12 @@ void SteppingAction::UserSteppingAction(const G4Step* aStep)
     track->SetTrackStatus(fStopAndKill);
   }
 
+  if(track->GetDefinition()->GetParticleName()=="e+"){
+    if( track->GetParentID()==application->GetPositronID() ){
+      //G4cout << "New positron ID = " << track->GetTrackID() << " parentID = " << track->GetParentID() << G4endl;
+      application->SetPositronID(track->GetTrackID());
+    }
+  } 
 
   if(procName == "DecayWithSpin" ){
      track= aStep->GetTrack();
@@ -109,6 +115,7 @@ void SteppingAction::UserSteppingAction(const G4Step* aStep)
      TE= track->GetTotalEnergy();
      application->PutDecayValue(eventNum,KE/MeV, TE/MeV,pos, mom, momv, pol,Gtime, Ptime, passID);
      G4cout << "TE=" << TE << " KE=" << KE << G4endl;
+     application->SetPositronID( track->GetTrackID() );
 
      G4TrackVector *secondary =fpSteppingManager->GetfSecondary();
      G4TrackVector::const_iterator p = secondary->begin();
@@ -134,7 +141,7 @@ void SteppingAction::UserSteppingAction(const G4Step* aStep)
        }
 
        //if(particlenameDaughter!="e-"){
-	 G4cout << "particlenameDaughter " << particlenameDaughter << G4endl;
+       G4cout << "particlenameDaughter " << particlenameDaughter << G4endl;
 	 G4cout << "TE=" << TE << G4endl;
 	 //}
 
@@ -143,7 +150,7 @@ void SteppingAction::UserSteppingAction(const G4Step* aStep)
      }//END for ( ; p != secondary->end(); ++p) {
 
   }else if(procName=="eBrem" || procName == "eIoni" || procName=="annihil" || procName=="msc"
-                  || procName=="compt" || procName == "phot" || procName=="conv"  ) {
+                  || procName=="compt" || procName == "phot" || procName=="conv" || procName=="Rayl" ) {
     track= aStep->GetTrack();
     gtime_all= track->GetGlobalTime();//nsec
 
@@ -158,7 +165,7 @@ void SteppingAction::UserSteppingAction(const G4Step* aStep)
     //G4double Ptime ;//nsec
     //G4double Gtime ;//nsec
     G4ThreeVector pos ;//nsec
-    //G4double TE;
+    G4double TE;
  
     eventNum=application->GetEventNum();
     KE = aStep->GetPreStepPoint()->GetKineticEnergy()/MeV;
@@ -168,8 +175,8 @@ void SteppingAction::UserSteppingAction(const G4Step* aStep)
     //Ptime = track->GetProperTime();//nsec
     //Gtime = track->GetGlobalTime();//nsec
     pos = track->GetPosition();//nsec
-    // TE= track->GetTotalEnergy();
-    
+    TE= track->GetTotalEnergy();
+ 
     G4TrackVector *secondary =fpSteppingManager->GetfSecondary();
     G4TrackVector::const_iterator p = secondary->begin();
     int count=0;
@@ -189,10 +196,12 @@ void SteppingAction::UserSteppingAction(const G4Step* aStep)
       if(particlenameDaughter=="gamma"){
 	Egamma=Egamma+KE;
       }
-      if(particlenameDaughter=="e-"){
+      else if(particlenameDaughter=="e-"){
 	Eelectron=Eelectron+KE;
       }
     }
+  }else if(procName!="StepLimiter" && procName!="Transportation"){
+    G4cout << "procName = " << procName << G4endl;
   }
 }
 

@@ -72,6 +72,10 @@ ApplicationManager::ApplicationManager()
   ntupleBody->Branch("pos_y",&pos_y);
   ntupleBody->Branch("pos_z",&pos_z);
   ntupleBody->Branch("tEnergy",&tEnergy);
+  ntupleBody->Branch("isPrimary",&fIsPrimary);
+  ntupleBody->Branch("trackID",&fTrackID);
+  //ntupleBody->Branch("stepLength",&fStepLength);
+  //ntupleBody->Branch("stepLengthTotal",&fStepLengthTotal);
 
   ntupleDecay= new TTree ("ntupleDecay","GEANT4 DecayTree");
   ntupleDecay->Branch("eventNum",&fEventNum,"eventNum/I");
@@ -91,6 +95,7 @@ ApplicationManager::ApplicationManager()
   ntupleDecay->Branch("Dpos_y",&Dpos_y,"Dpos_y/F");
   ntupleDecay->Branch("Dpos_z",&Dpos_z,"Dpos_z/F");
   ntupleDecay->Branch("DtEnergy",&DtEnergy,"DtEnergy[4]/F");
+  ntupleDecay->Branch("DPDG",&DPDG,"DPDG[4]/I");
 }
 
 ApplicationManager::~ApplicationManager()
