@@ -37,12 +37,15 @@ MagneticField::MagneticField()
 
   G4int count = 0;
   G4double RM, ZM, BR, BZ, APHI;
-  G4int rbin = 8;
-  G4int zbin = 128;
+  G4int rbin = 128;
+  G4int zbin = 1280;
+  const G4double roffset = 1e-3; // m
+  const G4double rmax = 0.5; // m
+  const G4double zmax = 0.5; // m
   for(G4int i=0;i<rbin;++i){
     for(G4int j=0;j<zbin;++j){
-      RM=0.333+(i-0.5*rbin)*12.4E-3/(double)(0.5*rbin);  
-      ZM=0+(j-0.5*zbin)*0.6/(double)(0.5*zbin);  
+      RM = roffset+i*rmax/(G4double)rbin;
+      ZM = (2*j-zbin)*zmax/(G4double)zbin;
       bflfit(fNF,fFLR,fFLZ,fFLCRNT,RM,ZM,BR,BZ,APHI);
       fGraph_Bz->SetPoint(count, RM, ZM, BZ);
       fGraph_Br->SetPoint(count, RM, ZM, BR);
