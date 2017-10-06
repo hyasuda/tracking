@@ -43,7 +43,7 @@ MagneticField::MagneticField()
   const G4double rmax = 0.5; // m
   const G4double zmax = 0.5; // m
   for(G4int i=0;i<rbin;++i){
-    for(G4int j=0;j<zbin;++j){
+    for(G4int j=0;j<=zbin;++j){
       RM = roffset+i*rmax/(G4double)rbin;
       ZM = (2*j-zbin)*zmax/(G4double)zbin;
       bflfit(fNF,fFLR,fFLZ,fFLCRNT,RM,ZM,BR,BZ,APHI);
@@ -150,10 +150,10 @@ void MagneticField::GetFieldValue( const G4double Point[4],G4double* Bfield ) co
   G4double cos_theta,sin_theta;
 
   // interpolated weak focusing magnetic field calculation
-  /*
-  G4double Br = fGraph_Br->Interpolate(posR/m, Point[2]/m)*tesla;
-  G4double Bz = fGraph_Bz->Interpolate(posR/m, Point[2]/m)*tesla;
-  */
+  
+  //G4double Br = fGraph_Br->Interpolate(posR/m, Point[2]/m)*tesla;
+  //G4double Bz = fGraph_Bz->Interpolate(posR/m, Point[2]/m)*tesla;
+  
 
   // precise weak focusing magnetic field calculation (too slow!)
   /*
@@ -174,10 +174,10 @@ void MagneticField::GetFieldValue( const G4double Point[4],G4double* Bfield ) co
     Bz=Bz+DBZ;
     APHI=APHI+DAPHI;
   }
-  
+  */  
   Br = Br*tesla;
   Bz = Bz*tesla;
-  */
+  
 
   if(posR>0){
      cos_theta=Point[0]/(double)posR;
