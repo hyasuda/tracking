@@ -174,9 +174,9 @@ void MagneticField::GetFieldValue( const G4double Point[4],G4double* Bfield ) co
     Bz=Bz+DBZ;
     APHI=APHI+DAPHI;
   }
-  */  
   Br = Br*tesla;
   Bz = Bz*tesla;
+  */  
   
 
   if(posR>0){
