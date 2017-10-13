@@ -4,6 +4,8 @@
 #include "G4VUserPrimaryGeneratorAction.hh"
 #include "globals.hh"
 
+#include <vector>
+
 class G4ParticleGun;
 class G4Event;
 class DetectorConstruction;
@@ -25,6 +27,13 @@ private:
     
   PrimaryGeneratorMessenger* gunMessenger;   //messenger of this class
   G4String                      rndmFlag;	  //flag for a rndm impact point
+
+  std::vector<G4double>  fBeamX;
+  std::vector<G4double>  fBeamY;
+  std::vector<G4double>  fBeamZ;
+  std::vector<G4double>  fBeamPx;
+  std::vector<G4double>  fBeamPy;
+  std::vector<G4double>  fBeamPz;
 };
 
 
