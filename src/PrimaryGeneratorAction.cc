@@ -108,7 +108,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
     // polarization magnitude
     const G4double polMag = 0.5;
     G4double rand2 = G4UniformRand();
-    if(rand2<(1-polMag)/(1+polMag)){
+    if(rand2<0.5*(1-polMag)){
       polx0 = -polx0;
       poly0 = -poly0;
       polz0 = -polz0;
@@ -128,8 +128,8 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
   particleGun->SetParticleEnergy(Kmu*MeV);//Kinetic energy
 
   particleGun->SetParticlePosition(G4ThreeVector(x0,y0,z0));//Initial position
-  particleGun->SetParticlePolarization(G4ThreeVector(0.,1.,0.));//Initial polarization
-  particleGun->SetParticleMomentumDirection(G4ThreeVector(0.,1.,0.));//Initial momentum direction
+  particleGun->SetParticlePolarization(G4ThreeVector(polx0,poly0,polz0));//Initial polarization
+  particleGun->SetParticleMomentumDirection(G4ThreeVector(px0,py0,pz0));//Initial momentum direction
   
   particleGun->GeneratePrimaryVertex(anEvent);
 }
