@@ -1,5 +1,6 @@
 // $Id: MagneticField.cc,v 1.1.1.1 2004/10/06 05:36:32 iwai Exp $
 #include "MagneticField.hh"
+#include "MagneticFieldMessenger.hh"
 
 #include "G4EqMagElectricField.hh"
 
@@ -18,10 +19,12 @@
 MagneticField* MagneticField::object = 0;
 
 MagneticField::MagneticField()
-  : G4MagneticField(), pStepper(0), fEquation(0)
+  : G4MagneticField(),pStepper(0),fEquation(0),fEquationSpin(0),fCalType("uniform"),fWithSpin(false)
 {
   object = this;
   updateField();
+  
+  fMagFieldMessenger = new MagneticFieldMessenger(this);
 
   // weak focusing field interpolation
   std::ifstream ifs("FLDATA/20160422_Abe2017May-77.txt"); // 5ko model
@@ -37,8 +40,8 @@ MagneticField::MagneticField()
 
   G4int count = 0;
   G4double RM, ZM, BR, BZ, APHI;
-  G4int rbin = 128;
-  G4int zbin = 1280;
+  G4int rbin = 100;
+  G4int zbin = 500;
   const G4double roffset = 1e-3; // m
   const G4double rmax = 0.5; // m
   const G4double zmax = 0.5; // m
@@ -55,7 +58,9 @@ MagneticField::MagneticField()
 }
 
 MagneticField::~MagneticField()
-{;}
+{
+  delete fMagFieldMessenger;
+}
 
 MagneticField* MagneticField::getObject()
 {
@@ -66,13 +71,6 @@ MagneticField* MagneticField::getObject()
 void MagneticField::updateField()
 {
 
-  if(fEquation) delete fEquation;//houiken 1007 sasikae
-  //fEquation = new G4EqEMFieldWithSpin(this);
-  //fEquation = new G4Mag_SpinEqRhs(this);
-  fEquation = new G4EqMagElectricField(this);
-
-  //apply a global uniform magnetic field along Z axis
-
   G4FieldManager* fieldMgr
    = G4TransportationManager::GetTransportationManager()->GetFieldManager();
 
@@ -81,13 +79,19 @@ void MagneticField::updateField()
 
   fieldPropagator = fTransportManager->GetPropagatorInField();
 
-
   fieldMgr->SetDetectorField(this);
 
   if(pStepper) delete pStepper;
-  pStepper = new G4ClassicalRK4(fEquation,8);
-  //pStepper = new G4ClassicalRK4(fEquation,12);
-  //pStepper = new G4SimpleHeum(fEquation,12);
+
+  if(fWithSpin){
+    if(fEquationSpin) delete fEquationSpin;
+    fEquationSpin = new G4EqEMFieldWithSpin(this);
+    pStepper = new G4ClassicalRK4(fEquationSpin,12);
+  }else{
+    if(fEquation) delete fEquation;//houiken 1007 sasikae
+    fEquation = new G4EqMagElectricField(this);
+    pStepper = new G4ClassicalRK4(fEquation,8);
+  }
 
   //  fieldMgr->CreateChordFinder(this);
 
@@ -129,7 +133,7 @@ void MagneticField::updateField()
 
 void MagneticField::GetFieldValue( const G4double Point[4],G4double* Bfield ) const
 {
-  // Point[0],Point[1],Point[2] are x-, y-, z-cordinates 
+  // Point[0],Point[1],Point[2],Point[3] are x, y, z, t cordinates 
 
   const G4double Er = 0.*volt/m; // set electroic fieled to zero
   //const G4double Er = 2.113987E+6*volt/m;
@@ -141,48 +145,47 @@ void MagneticField::GetFieldValue( const G4double Point[4],G4double* Bfield ) co
   G4double Ex,Ey;
 
   // uniform magnetic field
-  const G4double Bz = 3.0*tesla;
-  const G4double Br = 0.;
+  G4double Bz = 3.0*tesla;
+  G4double Br = 0.*tesla;
 
   G4double Bx,By;
  
   G4double posR=sqrt(pow(Point[0],2)+pow(Point[1],2));
   G4double cos_theta,sin_theta;
 
-  // interpolated weak focusing magnetic field calculation
-  
-  //G4double Br = fGraph_Br->Interpolate(posR/m, Point[2]/m)*tesla;
-  //G4double Bz = fGraph_Bz->Interpolate(posR/m, Point[2]/m)*tesla;
-  
+  if(fCalType=="interpolation"){
+    // interpolated weak focusing magnetic field calculation
+    Br = fGraph_Br->Interpolate(posR/m, Point[2]/m)*tesla;
+    Bz = fGraph_Bz->Interpolate(posR/m, Point[2]/m)*tesla;
+  }else if(fCalType=="strict"){
+    // strict weak focusing magnetic field calculation (too slow!)
+    Br=0.0;
+    Bz=0.0;
 
-  // precise weak focusing magnetic field calculation (too slow!)
-  /*
-  G4double Br=0.0;
-  G4double Bz=0.0;
+    G4double APHI=0.0E0;
+    double DDD,DBR,DBZ,DAPHI;
+    G4double posRm = posR/m;
+    G4double zm = Point[2]/m;
 
-  G4double APHI=0.0E0;
-  double DDD,DBR,DBZ,DAPHI;
-  G4double posRm = posR/m;
-  G4double zm = Point[2]/m;
-
-  for(int i=0;i<fNF;++i){
-    DDD=sqrt((fFLR[i]-posR)*(fFLR[i]-posR)+(fFLZ[i]-Point[2])*(fFLZ[i]-Point[2]));
-    if(DDD!=0.0E0){
-      bfield(fFLR[i],fFLZ[i],fFLCRNT[i],posRm,zm,DBR,DBZ,DAPHI);  
+    for(int i=0;i<fNF;++i){
+      DDD=sqrt((fFLR[i]-posR)*(fFLR[i]-posR)+(fFLZ[i]-Point[2])*(fFLZ[i]-Point[2]));
+      DBR = 0.;
+      DBZ = 0.;
+      if(DDD!=0.0E0){
+	bfield(fFLR[i],fFLZ[i],fFLCRNT[i],posRm,zm,DBR,DBZ,DAPHI);  
+      }
+      Br=Br+DBR;
+      Bz=Bz+DBZ;
+      APHI=APHI+DAPHI;
     }
-    Br=Br+DBR;
-    Bz=Bz+DBZ;
-    APHI=APHI+DAPHI;
+    Br = Br*tesla;
+    Bz = Bz*tesla;
   }
-  Br = Br*tesla;
-  Bz = Bz*tesla;
-  */  
-  
 
   if(posR>0){
-     cos_theta=Point[0]/(double)posR;
-     sin_theta=Point[1]/(double)posR;
-     Ex=-1*Er*cos_theta;//apply radial electric field
+     cos_theta=Point[0]/posR;
+     sin_theta=Point[1]/posR;
+     Ex=-1*Er*cos_theta;
      Ey=-1*Er*sin_theta;
      Bx=Br*cos_theta;
      By=Br*sin_theta;
@@ -193,7 +196,6 @@ void MagneticField::GetFieldValue( const G4double Point[4],G4double* Bfield ) co
      By=0.;
   }
   
-
   Bfield[0]=Bx;
   Bfield[1]=By;
   Bfield[2]=Bz;
@@ -207,9 +209,9 @@ void MagneticField::GetFieldValue( const G4double Point[4],G4double* Bfield ) co
 
 void MagneticField::bflfit(int NF,double FLR[500],double FLZ[500],double FLCRNT[500],double RM,double ZM,double &BR,double &BZ,double &APHI)
 {
-  BR=0.0E0;
-  BZ=0.0E0;
-  APHI=0.0E0;
+  BR=0.0;
+  BZ=0.0;
+  APHI=0.0;
   double DDD,DBR,DBZ,DAPHI;
   for(int i=0;i<NF;++i){
     DDD=sqrt(pow(FLR[i]-RM,2)+pow(FLZ[i]-ZM,2));
@@ -231,23 +233,21 @@ void MagneticField::bfield(double CR,double CZ,double CI,double RI,double ZJ,dou
 //    (RI,ZJ)--- MEASUREMENT POSITION                                  
 //    (BR,BZ)--- MAGNETIC FIELD                                        
 //    (APHI) --- VECTOR POTENTIAL                                      
-  //G4int cep=0;
   double XMU=4.E-7;                                                        
   double S =RI*RI+CR*CR+(ZJ-CZ)*(ZJ-CZ);                                  
   double P =RI*CR+RI*CR;                                                  
   double RK=(P+P)/(double)(S+P);  
   double PSI;
   double ELPK,ELPE,ILL; 
-  cep12d(RK,/*1,*/ELPK,ELPE,ILL);                                  
+  cep12d(RK,ELPK,ELPE,ILL);                                  
   
   if(ILL==0){                                          
     RK=sqrt(RK);                                                    
-    BZ =XMU*CI/(double)(2.E0* sqrt(S+P))*(ELPK-(S-2.E0*CR*CR)/(double)(S-P)*ELPE);    
-    BR =XMU*CI/(double)(2.E0* sqrt(S+P))*(ZJ-CZ)/(double)RI*(-ELPK+ S/(double)(S-P)*ELPE);    
-    PSI=CI/(double)RK* sqrt(RI*CR)*((1.E0-RK*RK/(double)2.E0)*ELPK-ELPE);            
+    BZ =XMU*CI/(double)(2.* sqrt(S+P))*(ELPK-(S-2.*CR*CR)/(double)(S-P)*ELPE);    
+    BR =XMU*CI/(double)(2.* sqrt(S+P))*(ZJ-CZ)/(double)RI*(-ELPK+ S/(double)(S-P)*ELPE);    
+    PSI=CI/(double)RK* sqrt(RI*CR)*((1.E0-RK*RK/(double)2.)*ELPK-ELPE);            
     APHI=XMU*PSI/(double)RI;                                                  
   }
-  //return cep;
 }         
 //---------------------------------------------------------------------  
 void MagneticField::cep12d(double RK,/*double I,*/double &AK,double &AE,double &ILL) const
@@ -268,7 +268,6 @@ void MagneticField::cep12d(double RK,/*double I,*/double &AK,double &AE,double &
     B                           0.09200180037D0,0.04069697526D0,      
     C                           0.00526449639D0/                      
   */
-  //G4int ans=0;
   double AZ=1.38629436112E0;
   double A1=0.09666344259E0;
   double A2=0.03590092383E0;
@@ -290,29 +289,23 @@ void MagneticField::cep12d(double RK,/*double I,*/double &AK,double &AE,double &
   double EB3=0.04069697526E0;
   double EB4=0.00526449639E0;
   
-  //I=1;                                                              
   ILL=0;                                                           
   double XM1,XM2,XM3,XM4,DALXM,ALXM;
   double BZZ;
-  if(RK<0.0E0   ||   RK>1.0E0){               
+  if(RK<0. || RK>1.){               
     ILL=1;                                                            
     AK=0.0;                                                            
     AE=0.0;                                                            
   }else{
-    XM1=1.0E0-RK;                                                      
+    XM1=1.-RK;                                                      
     XM2=XM1*XM1;                                                      
     XM3=XM2*XM1;                                                      
     XM4=XM3*XM1;                                                      
-    DALXM=1.0E0/(double)XM1;                                                  
+    DALXM=1./(double)XM1;                                                  
     ALXM=log(DALXM);                                                
-    //                                                                      
     BZZ=BZ+B1*XM1+B2*XM2+B3*XM3+B4*XM4;                                
     AK= AZ+A1*XM1+A2*XM2+A3*XM3+A4*XM4 + BZZ*ALXM;                    
-    //                                                                      
     BZZ=EBZ+EB1*XM1+EB2*XM2+EB3*XM3+EB4*XM4;                      
     AE=EAZ+EA1*XM1+EA2*XM2+EA3*XM3+EA4*XM4+BZZ*ALXM;              
-    //ans=1;
   }
-  //return ans;
 }                                                            
-
