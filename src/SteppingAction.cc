@@ -157,7 +157,7 @@ void SteppingAction::UserSteppingAction(const G4Step* aStep)
     //G4double Ptime ;//nsec
     //G4double Gtime ;//nsec
     G4ThreeVector pos ;//nsec
-    G4double TE;
+    //G4double TE;
  
     eventNum=application->GetEventNum();
     KE = aStep->GetPreStepPoint()->GetKineticEnergy()/MeV;
@@ -167,7 +167,7 @@ void SteppingAction::UserSteppingAction(const G4Step* aStep)
     //Ptime = track->GetProperTime();//nsec
     //Gtime = track->GetGlobalTime();//nsec
     pos = track->GetPosition();//nsec
-    TE= track->GetTotalEnergy();
+    //TE= track->GetTotalEnergy();
  
     G4TrackVector *secondary =fpSteppingManager->GetfSecondary();
     G4TrackVector::const_iterator p = secondary->begin();
