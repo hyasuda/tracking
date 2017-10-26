@@ -56,8 +56,12 @@ int main(int argc,char** argv)
   // Construct the default run manager
   G4RunManager * runManager = new G4RunManager;
 
+  G4int nvane = 24;
+  if(argc>2){
+    nvane = atoi(argv[2]);
+  }
   // Set mandatory initialization classes
-  DetectorConstruction* detector = new DetectorConstruction;
+  DetectorConstruction* detector = new DetectorConstruction(nvane);
   runManager->SetUserInitialization(detector);
 
   //  G4VUserPhysicsList* physics = new QGSP;
@@ -97,8 +101,8 @@ int main(int argc,char** argv)
       //tyosioka 170421 for GDML
       //
       G4GDMLParser parser;
-      if (argc>=3){
-	parser.Write(argv[2], G4TransportationManager::GetTransportationManager()->
+      if (argc>=4){
+	parser.Write(argv[3], G4TransportationManager::GetTransportationManager()->
 		     GetNavigatorForTracking()->GetWorldVolume()->GetLogicalVolume());
       }
     }
@@ -126,7 +130,7 @@ int main(int argc,char** argv)
 #endif
 
       //      UI->ApplyCommand("/control/execute vis3.mac");
-      UI->ApplyCommand("/control/execute originvis.mac");
+      UI->ApplyCommand("/control/execute macro/originvis.mac");
       session->SessionStart();
       delete session;
       

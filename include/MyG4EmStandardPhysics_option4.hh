@@ -24,30 +24,53 @@
 // ********************************************************************
 //
 //
+// $Id: G4EmStandardPhysics_option4.hh 98736 2016-08-09 10:55:12Z gcosmo $
 //
+//---------------------------------------------------------------------------
+//
+// ClassName:   G4EmStandardPhysics_option4
+//
+// Author:      V.Ivanchenko 28.09.2012
+//
+// Modified:
+//
+//----------------------------------------------------------------------------
+//
+// This class provides construction of EM physics using the best models
+// of standard and low-energy packages and set of 
+// the most adavced options allowing precise simulation at low
+// and intermediate energies
 //
 
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo....
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo....
-
-#ifndef F04ExtraPhysics_h
-#define F04ExtraPhysics_h 1
-
-#include "globals.hh"
+#ifndef MyG4EmStandardPhysics_option4_h
+#define MyG4EmStandardPhysics_option4_h 1
 
 #include "G4VPhysicsConstructor.hh"
-//#include "G4VUserPhysicsList.hh"
+#include "globals.hh"
 
-class F04ExtraPhysics : public G4VPhysicsConstructor
-//class F04ExtraPhysics : public G4VUserPhysicsList
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+class MyG4EmStandardPhysics_option4 : public G4VPhysicsConstructor
 {
 public:
 
-    F04ExtraPhysics();
-    virtual ~F04ExtraPhysics();
+  explicit MyG4EmStandardPhysics_option4(G4int ver=1, const G4String& name="");
 
-    virtual void ConstructParticle();
-    virtual void ConstructProcess();
+  virtual ~MyG4EmStandardPhysics_option4();
 
+  virtual void ConstructParticle();
+  virtual void ConstructProcess();
+
+private:
+  G4int  verbose;
 };
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
 #endif
+
+
+
+
+
+

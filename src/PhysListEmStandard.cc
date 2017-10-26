@@ -88,8 +88,9 @@ PhysListEmStandard::~PhysListEmStandard()
 void PhysListEmStandard::ConstructProcess()
 {
   // Add standard EM Processes
-  //  G4cout << "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" << G4endl;  
+  auto theParticleIterator = GetParticleIterator();
   theParticleIterator->reset();
+ 
   while( (*theParticleIterator)() ){
     G4ParticleDefinition* particle = theParticleIterator->value();
     G4ProcessManager* pmanager = particle->GetProcessManager();
@@ -100,21 +101,21 @@ void PhysListEmStandard::ConstructProcess()
       G4PhotoElectricEffect* thePhotoElectricEffect = new G4PhotoElectricEffect();
       G4LivermorePhotoElectricModel* theLivermorePhotoElectricModel 
 	= new G4LivermorePhotoElectricModel();
-      thePhotoElectricEffect->SetModel(theLivermorePhotoElectricModel);
+      thePhotoElectricEffect->SetEmModel(theLivermorePhotoElectricModel);
 
       G4ComptonScattering* theComptonScattering = new G4ComptonScattering();
       G4LivermoreComptonModel* theLivermoreComptonModel 
 	= new G4LivermoreComptonModel();
-      theComptonScattering->SetModel(theLivermoreComptonModel);
+      theComptonScattering->SetEmModel(theLivermoreComptonModel);
       
       G4GammaConversion* theGammaConversion = new G4GammaConversion();
       G4LivermoreGammaConversionModel* theLivermoreGammaConversionModel 
 	= new G4LivermoreGammaConversionModel();
-      theGammaConversion->SetModel(theLivermoreGammaConversionModel);
+      theGammaConversion->SetEmModel(theLivermoreGammaConversionModel);
 
       G4RayleighScattering* theRayleigh = new G4RayleighScattering();
       G4LivermoreRayleighModel* theRayleighModel = new G4LivermoreRayleighModel();
-      theRayleigh->SetModel(theRayleighModel);
+      theRayleigh->SetEmModel(theRayleighModel);
       
       pmanager->AddDiscreteProcess(thePhotoElectricEffect);
       pmanager->AddDiscreteProcess(theComptonScattering);

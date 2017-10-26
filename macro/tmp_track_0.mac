@@ -1,3 +1,16 @@
+# set magnetic field calculation type
+/mu/mag/calType uniform
+#/mu/mag/calType interpolation
+#/mu/mag/calType strict
+#
+# set magnetic field spin tracking
+#/mu/mag/withSpin true
+/mu/mag/withSpin false
+#
+# set muon beam distribution on/off
+#/mu/gun/rndm on
+/mu/gun/rndm off
+#
 /random/setSeeds 18364293 54983657
 /run/beamOn 100
 exit

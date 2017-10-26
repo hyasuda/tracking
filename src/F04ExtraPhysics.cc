@@ -37,6 +37,7 @@
 #include "F04ExtraPhysics.hh"
 
 F04ExtraPhysics::F04ExtraPhysics() 
+//    : G4VUserPhysicsList() { }
     : G4VPhysicsConstructor("Extra") { }
 
 F04ExtraPhysics::~F04ExtraPhysics() { }
@@ -48,10 +49,11 @@ void F04ExtraPhysics::ConstructProcess()
     G4cout << "F04ExtraPhysics:: Add Extra Physics Processes" 
               << G4endl;
 
+    auto theParticleIterator = GetParticleIterator();
     theParticleIterator->reset();
 
-    while ((*theParticleIterator)()) {
-        G4ParticleDefinition* particle = theParticleIterator->value();
+    while ( (*theParticleIterator)() ) {
+      G4ParticleDefinition* particle = theParticleIterator->value();
         G4ProcessManager* pmanager = particle->GetProcessManager();
         G4String particleName = particle->GetParticleName();
         G4double charge = particle->GetPDGCharge();
