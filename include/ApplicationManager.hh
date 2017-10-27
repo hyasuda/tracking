@@ -52,6 +52,7 @@ class ApplicationManager
     G4double theHitKEnergy;
     G4double theHitGtime;
     G4double theHitPtime;
+    G4double thePrevTime;
     G4int theParID;
     G4int theHitBodyTyp;
     G4int theHitInfo;
@@ -66,6 +67,7 @@ class ApplicationManager
     TH2D* theHitHist;
     TTree* ntupleBody;
     TTree* ntupleDecay;
+    TTree* ntupleTransport;
 
     int   fEventNum;
     int   fHitInfo;
@@ -110,6 +112,21 @@ class ApplicationManager
   //    float TotDep;
     int   DPDG[4];
 
+    std::vector<double> fTpos_x;
+    std::vector<double> fTpos_y;
+    std::vector<double> fTpos_z;
+    std::vector<double> fTtEnergy;
+    std::vector<double> fTmom_x;
+    std::vector<double> fTmom_y;
+    std::vector<double> fTmom_z;
+    std::vector<double> fTtime;
+    std::vector<double> fTpol_x;
+    std::vector<double> fTpol_y;
+    std::vector<double> fTpol_z;
+    std::vector<double> fTmag_x;
+    std::vector<double> fTmag_y;
+    std::vector<double> fTmag_z;
+
   public:
     ApplicationManager();
     ~ApplicationManager();
@@ -126,6 +143,7 @@ class ApplicationManager
     G4double GetHitTEnergy() const;
     G4double GetHitGtime() const;
     G4double GetHitPtime() const;
+    G4double GetPrevTime() const;
     G4int GetEventNum() const;
     G4int GetHitInfo() const;
     G4int GetHitBody() const;
@@ -138,6 +156,7 @@ class ApplicationManager
     void SetHitMomentum(const G4ThreeVector& mom);
     void SetHitTEnergy(G4double Tenergy);
     void SetHitKEnergy(G4double Kenergy);
+    void SetPrevTime(G4double time);
     void SetEventNum(G4int eventNum);
     void SetHitInfo(G4int hitInfo);
     void SetHitGtime(G4double Gtime);
@@ -160,11 +179,13 @@ class ApplicationManager
     void Fill(G4double edep );
     void Fill(G4double x, G4double y, G4double edep);
     void FillNtuple(); 
-    void FillDecayNtuple(); 
+    void FillDecayNtuple();
+    void FillTransportNtuple(); 
     void PutNtupleValue(G4int pID,G4double kE, G4double tE, G4ThreeVector pos, G4ThreeVector mom, 
 			G4double Gtime, G4double Ptime, G4int bodyTyp, G4int bodyStatus, G4int chID, G4int evtNum, G4int hitInfo, G4double CurrentDepE, G4double EachDepE, G4int isPrimary, G4int trackID/*, G4double stepLength, G4double stepLengthTotal*/);
     void PutDecayValue(G4int evtNum,G4double DKEnergy, G4double DTEnergy, G4ThreeVector Dpos, G4ThreeVector Dmom, 
               G4ThreeVector Dmomv, G4ThreeVector Dpol,G4double DGtime, G4double DPtime, G4int passID);
+    void PutTransportValue(G4int evtNum, G4double TtEnergy, G4ThreeVector Tmom, G4double Ttime, G4ThreeVector Tpos, G4ThreeVector Tpol, G4ThreeVector Tmag);
     void ClearNtuple(G4int eventNum); 
 
 };
@@ -230,6 +251,11 @@ inline G4double ApplicationManager::GetHitGtime() const
 inline G4double ApplicationManager::GetHitPtime() const
 {
   return theHitPtime;
+}
+
+inline G4double ApplicationManager::GetPrevTime() const
+{
+  return thePrevTime;
 }
 
 inline G4int ApplicationManager::GetHitBody() const
@@ -302,6 +328,12 @@ inline void ApplicationManager::SetHitGtime(G4double Gtime)
 inline void ApplicationManager::SetHitPtime(G4double Ptime)
 {
   theHitPtime = Ptime;
+  return;
+}
+
+inline void ApplicationManager::SetPrevTime(G4double time)
+{
+  thePrevTime = time;
   return;
 }
 
@@ -396,6 +428,7 @@ inline void ApplicationManager::Save()
   //theHitHist->Write();
   ntupleBody->Write();
   ntupleDecay->Write();
+  ntupleTransport->Write();
   file->Close();
   delete file;
   return;
@@ -451,8 +484,24 @@ inline void ApplicationManager::ClearNtuple(G4int evtNum)
   //fStepLength.clear();
   //fStepLengthTotal.clear();
 
+  fTmom_x.clear();
+  fTmom_y.clear();
+  fTmom_z.clear();
+  fTtEnergy.clear();
+  fTpos_x.clear();
+  fTpos_y.clear();
+  fTpos_z.clear();
+  fTtime.clear();
+  fTpol_x.clear();
+  fTpol_y.clear();
+  fTpol_z.clear();
+  fTmag_x.clear();
+  fTmag_y.clear();
+  fTmag_z.clear();
+
   fHitInfo=0;
   theHitInfo=0;
+  thePrevTime=0.;
 
   return;
 }
@@ -523,6 +572,26 @@ inline void ApplicationManager::PutNtupleValue(G4int parID, G4double KEnergy, G4
 
 }
 
+inline void ApplicationManager::PutTransportValue(G4int eventNum, G4double TtEnergy, G4ThreeVector Tmom, G4double Ttime, G4ThreeVector Tpos, G4ThreeVector Tpol, G4ThreeVector Tmag)
+{
+  fEventNum = eventNum;
+  fTtEnergy.push_back(TtEnergy/MeV);
+  fTmom_x.push_back(Tmom.x());
+  fTmom_y.push_back(Tmom.y());
+  fTmom_z.push_back(Tmom.z());
+  fTtime.push_back(Ttime);
+  fTpos_x.push_back(Tpos.x());
+  fTpos_y.push_back(Tpos.y());
+  fTpos_z.push_back(Tpos.z());
+  fTpol_x.push_back(Tpol.x());
+  fTpol_y.push_back(Tpol.y());
+  fTpol_z.push_back(Tpol.z());
+  fTmag_x.push_back(Tmag.x());
+  fTmag_y.push_back(Tmag.y());
+  fTmag_z.push_back(Tmag.z());
+  return;
+}
+
 inline void ApplicationManager::FillNtuple()
 {
   ntupleBody->Fill();
@@ -534,4 +603,11 @@ inline void ApplicationManager::FillDecayNtuple()
   ntupleDecay->Fill();
   return;
 }
+
+inline void ApplicationManager::FillTransportNtuple()
+{
+  ntupleTransport->Fill();
+  return;
+}
+
 #endif

@@ -34,7 +34,7 @@ ApplicationManager::ApplicationManager()
   theEdepHist->GetYaxis()->SetTitle("Number of events");
   theEdepHist->SetFillColor(kBlue);
 
-
+  thePrevTime = 0.;
 
   // const G4ThreeVector BODY_SIZE(40*cm, 60*cm, 20*cm);
   G4double bodyx = 40*cm;
@@ -93,6 +93,23 @@ ApplicationManager::ApplicationManager()
   ntupleDecay->Branch("Dpos_z",&Dpos_z,"Dpos_z/F");
   ntupleDecay->Branch("DtEnergy",&DtEnergy,"DtEnergy[4]/F");
   ntupleDecay->Branch("DPDG",&DPDG,"DPDG[4]/I");
+
+  ntupleTransport = new TTree("ntupleTransport", "GEANT4 TransportTree");
+  ntupleTransport->Branch("eventNum", &fEventNum, "TeventNum/I");
+  ntupleTransport->Branch("Tpos_x", &fTpos_x);
+  ntupleTransport->Branch("Tpos_y", &fTpos_y);
+  ntupleTransport->Branch("Tpos_z", &fTpos_z);
+  ntupleTransport->Branch("Tmom_x", &fTmom_x);
+  ntupleTransport->Branch("Tmom_y", &fTmom_y);
+  ntupleTransport->Branch("Tmom_z", &fTmom_z);
+  ntupleTransport->Branch("Ttime", &fTtime);
+  ntupleTransport->Branch("TtEnergy", &fTtEnergy);
+  ntupleTransport->Branch("Tpol_x", &fTpol_x);
+  ntupleTransport->Branch("Tpol_y", &fTpol_y);
+  ntupleTransport->Branch("Tpol_z", &fTpol_z);
+  ntupleTransport->Branch("Tmag_x", &fTmag_x);
+  ntupleTransport->Branch("Tmag_y", &fTmag_y);
+  ntupleTransport->Branch("Tmag_z", &fTmag_z);
 }
 
 ApplicationManager::~ApplicationManager()

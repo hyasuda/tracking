@@ -65,6 +65,20 @@ void SteppingAction::UserSteppingAction(const G4Step* aStep)
     track->SetTrackStatus(fStopAndKill);
   }
 
+  if(gtime_all-application->GetPrevTime()>100.*ns){
+    //G4cout << "gtime = " << gtime_all << " muon r = " << track->GetPosition().perp() << " z = " << track->GetPosition().z() << " pz' = " << track->GetMomentum().z()/track->GetMomentum().mag() << G4endl;
+    application->SetPrevTime(gtime_all);
+
+    if(track->GetDefinition()->GetParticleName()=="mu+"){
+      MagneticField *mymagField = MagneticField::getObject();
+      G4double point[4] = {track->GetPosition().x(),track->GetPosition().y(),track->GetPosition().z(),gtime_all};
+      G4double Bfield[6];
+      mymagField->GetFieldValue(point, Bfield);
+      G4ThreeVector Bmag(Bfield[0],Bfield[1],Bfield[2]);
+      application->PutTransportValue(application->GetEventNum(), track->GetTotalEnergy(), track->GetMomentum(), gtime_all, track->GetPosition(), track->GetPolarization(), Bmag);
+    }
+  }
+
   if(track->GetDefinition()->GetParticleName()=="e+"){
     if( track->GetParentID()==application->GetPositronID() ){
       //G4cout << "New positron ID = " << track->GetTrackID() << " parentID = " << track->GetParentID() << G4endl;
