@@ -25,34 +25,48 @@ MagneticField::MagneticField()
   updateField();
   
   fMagFieldMessenger = new MagneticFieldMessenger(this);
+}
 
-  // weak focusing field interpolation
-  std::ifstream ifs("FLDATA/20160422_Abe2017May-77.txt"); // 5ko model
-  G4int IDUM;
-  ifs >> fNF;
-  for(G4int i=0;i<fNF;++i){
-    ifs >> IDUM >> fFLR[i] >> fFLZ[i] >> fFLCRNT[i];
-  }
-  ifs.close();
-
-  fGraph_Bz = new TGraph2D;
-  fGraph_Br = new TGraph2D;
-
-  G4int count = 0;
-  G4double RM, ZM, BR, BZ, APHI;
-  G4int rbin = 100;
-  G4int zbin = 500;
-  const G4double roffset = 1e-3; // m
-  const G4double rmax = 0.5; // m
-  const G4double zmax = 0.5; // m
-  for(G4int i=0;i<rbin;++i){
-    for(G4int j=0;j<=zbin;++j){
-      RM = roffset+i*rmax/(G4double)rbin;
-      ZM = (2*j-zbin)*zmax/(G4double)zbin;
-      bflfit(fNF,fFLR,fFLZ,fFLCRNT,RM,ZM,BR,BZ,APHI);
-      fGraph_Bz->SetPoint(count, RM, ZM, BZ);
-      fGraph_Br->SetPoint(count, RM, ZM, BR);
-      count++;
+void MagneticField::FillFieldValue()
+{
+  if(fCalType=="interpolation" ||
+     fCalType=="interpolationstorage" || 
+     fCalType=="strict"){
+    // weak focusing field interpolation
+    std::ifstream ifs("FLDATA/20160422_Abe2017May-77.txt"); // 5ko model
+    G4int IDUM;
+    ifs >> fNF;
+    for(G4int i=0;i<fNF;++i){
+      ifs >> IDUM >> fFLR[i] >> fFLZ[i] >> fFLCRNT[i];
+    }
+    ifs.close();
+    
+    fGraph_Bz = new TGraph2D;
+    fGraph_Br = new TGraph2D;
+    
+    G4int count = 0;
+    G4double RM, ZM, BR, BZ, APHI;
+    G4int rbin = 100;
+    G4int zbin = 500;
+    G4double roffset = 1e-3; // m
+    G4double rmax = 0.5; // m
+    G4double zmax = 0.5; // m
+    if(fCalType=="interpolationstorage"){
+      rbin = 10;
+      zbin = 50;
+      roffset = 0.283; // m
+      rmax = 0.383; // m
+      zmax = 0.1; // m
+    }
+    for(G4int i=0;i<rbin;++i){
+      for(G4int j=0;j<=zbin;++j){
+	RM = roffset+i*rmax/(G4double)rbin;
+	ZM = (2*j-zbin)*zmax/(G4double)zbin;
+	bflfit(fNF,fFLR,fFLZ,fFLCRNT,RM,ZM,BR,BZ,APHI);
+	fGraph_Bz->SetPoint(count, RM, ZM, BZ);
+	fGraph_Br->SetPoint(count, RM, ZM, BR);
+	count++;
+      }
     }
   }
 }
@@ -153,7 +167,7 @@ void MagneticField::GetFieldValue( const G4double Point[4],G4double* Bfield ) co
   G4double posR=sqrt(pow(Point[0],2)+pow(Point[1],2));
   G4double cos_theta,sin_theta;
 
-  if(fCalType=="interpolation"){
+  if(fCalType=="interpolation" || fCalType=="interpolationstorage"){
     // interpolated weak focusing magnetic field calculation
     Br = fGraph_Br->Interpolate(posR/m, Point[2]/m)*tesla;
     Bz = fGraph_Bz->Interpolate(posR/m, Point[2]/m)*tesla;

@@ -1,6 +1,7 @@
 # set magnetic field calculation type
 /mu/mag/calType uniform
 #/mu/mag/calType interpolation
+#/mu/mag/calType interpolationstorage
 #/mu/mag/calType strict
 #
 # set magnetic field spin tracking
