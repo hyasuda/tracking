@@ -16,7 +16,7 @@ MagneticFieldMessenger::MagneticFieldMessenger(MagneticField* mag)
   fCalTypeCmd->SetGuidance("choose MagneticField calculation type");
   fCalTypeCmd->SetParameterName("CalType",true);
   fCalTypeCmd->SetDefaultValue("uniform");
-  fCalTypeCmd->SetCandidates("uniform interpolation strict");
+  fCalTypeCmd->SetCandidates("uniform interpolation interpolationstorage strict");
   fCalTypeCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
   
   fWithSpinCmd = new G4UIcmdWithABool("/mu/mag/withSpin", this);
@@ -39,7 +39,8 @@ MagneticFieldMessenger::~MagneticFieldMessenger()
 void MagneticFieldMessenger::SetNewValue(G4UIcommand* command,G4String newValue)
 { 
   if( command == fCalTypeCmd )
-    { fMag->SetCalType(newValue); }
+    { fMag->SetCalType(newValue);
+      fMag->FillFieldValue(); }
 
   if( command == fWithSpinCmd )
     { fMag->SetWithSpin(newValue);
