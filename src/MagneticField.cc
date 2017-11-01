@@ -54,9 +54,9 @@ void MagneticField::FillFieldValue()
     if(fCalType=="interpolationstorage"){
       rbin = 10;
       zbin = 50;
-      roffset = 0.283; // m
-      rmax = 0.383; // m
-      zmax = 0.1; // m
+      roffset = 0.293; // m
+      rmax = 0.373; // m
+      zmax = 0.05; // m
     }
     for(G4int i=0;i<rbin;++i){
       for(G4int j=0;j<=zbin;++j){
