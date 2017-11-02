@@ -673,8 +673,8 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter()
   //
   //G4double window_din = 218.*2.+tube_dout;
   //G4double window_dout = 218.2*2.+tube_dout;
-  G4double window_din = 300.*2;
-  G4double window_dout = 300.2*2.;
+  G4double window_din = 305.*2;
+  G4double window_dout = 305.1*2.;
 
   G4double windowH = 200.;
   sol_window = new G4Tubs("window",window_din/2*mm,window_dout/2*mm,windowH/2*mm,
