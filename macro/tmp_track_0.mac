@@ -12,6 +12,9 @@
 #/mu/gun/rndm on
 /mu/gun/rndm off
 #
+# set output file name
+#/mu/run/fileName data/mug2edm_0.root
+#
 /random/setSeeds 18364293 54983657
 /run/beamOn 100
 exit

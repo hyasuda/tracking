@@ -15,8 +15,8 @@ ApplicationManager* ApplicationManager::theApplicationManager = 0;
 
 ApplicationManager::ApplicationManager()
   : theEdepByEvent(), theEdepByRun(), theHitPosition(), 
-    theFileStream()
-  , theApplication(0), 
+    theFileStream(), 
+    theApplication(0), 
     theEdepHist(0), theHitHist(0)
 {
   if ( theApplicationManager ) {

@@ -9,7 +9,7 @@ class G4Run;
 class TH1D;
 class TTree;
 class TFile;
-
+class RunActionMessenger;
 
 class RunAction : public G4UserRunAction
 {
@@ -21,13 +21,18 @@ public:
   void   EndOfRunAction(const G4Run*);
     
   void fillPerEvent(G4double, G4double, G4double, G4double); 
+  void SetFileName(G4String fileName){ theFileName = fileName; }
 
 private:
+  RunActionMessenger* runmessenger;
+
   G4double sumEAbs, sum2EAbs;
   G4double sumEGap, sum2EGap;
     
   G4double sumLAbs, sum2LAbs;
   G4double sumLGap, sum2LGap;    
+
+  G4String theFileName;
 
 //DataBroker 
   G4String AsString( G4int runid, G4int digit = 6 ) const;

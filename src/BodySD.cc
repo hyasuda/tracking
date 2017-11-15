@@ -55,7 +55,7 @@ void BodySD::Initialize(G4HCofThisEvent* HCTE)
 }
 /////////////////////////////////////
 
-G4bool BodySD::ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist)
+G4bool BodySD::ProcessHits(G4Step* aStep, G4TouchableHistory*/* ROhist*/)
 {
   ApplicationManager* application = ApplicationManager::GetApplicationManager();
 
