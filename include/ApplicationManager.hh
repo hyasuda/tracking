@@ -57,6 +57,7 @@ class ApplicationManager
     G4int theHitInfo;
     G4int theEventNum;
     G4int thePositronID;
+    G4int theBeamIndex;
     std::ofstream theFileStream;
 
   private:
@@ -131,6 +132,7 @@ class ApplicationManager
     G4int GetHitBody() const;
     G4int GetParID() const;
     G4int GetPositronID() const;
+    G4int GetBeamIndex() const { return theBeamIndex; }
     std::ofstream& GetFileStream();
     void SetEdepByEvent(G4double edep);
     void SetEdepByRun(G4double edep);
@@ -145,6 +147,7 @@ class ApplicationManager
     void SetHitBody(G4int theHitBodyTyp);
     void SetParID(G4int theParID);
     void SetPositronID(G4int trackID);
+    void SetBeamIndex(G4int beamIndex){ theBeamIndex = beamIndex; }
 
     void AddEdepByEvent(G4double edep);
     void AddEdepByRun(G4double edep);
@@ -421,6 +424,7 @@ inline void ApplicationManager::ClearNtuple(G4int evtNum)
 {
 
   fEventNum= evtNum;
+
   for(int i=0;i<4;++i){
     DkEnergy[i] = 0;
     Dmomv_x[i] = 0;
@@ -431,7 +435,7 @@ inline void ApplicationManager::ClearNtuple(G4int evtNum)
     Dmom_z[i] = 0;
     DtEnergy[i]= 0;
     DPDG[i] = 0;
- }
+  }
 
   //kEnergy.clear();
   EachDepE.clear();
@@ -476,7 +480,6 @@ G4ThreeVector Dpos, G4ThreeVector Dmom, G4ThreeVector Dmomv, G4ThreeVector Dpol,
     Dpos_x = Dpos.x();
     Dpos_y = Dpos.y();
     Dpos_z = Dpos.z();
-  
   }
   DtEnergy[passID]= DTEnergy/MeV;
   DkEnergy[passID]= DKEnergy/MeV;

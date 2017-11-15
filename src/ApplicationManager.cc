@@ -76,6 +76,7 @@ ApplicationManager::ApplicationManager()
 
   ntupleDecay= new TTree ("ntupleDecay","GEANT4 DecayTree");
   ntupleDecay->Branch("eventNum",&fEventNum,"eventNum/I");
+  ntupleDecay->Branch("beamIndex",&theBeamIndex,"beamIndex/I");
   //ntupleDecay->Branch("Dptime",&Dptime,"Dptime/F");
   ntupleDecay->Branch("Dgtime",&Dgtime,"Dgtime/F");
   // ntupleDecay->Branch("DkEnergy",&DkEnergy,"DkEnergy[4]/F");

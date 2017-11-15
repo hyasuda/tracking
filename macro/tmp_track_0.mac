@@ -9,11 +9,17 @@
 /mu/mag/withSpin false
 #
 # set muon beam distribution on/off
-#/mu/gun/rndm on
-/mu/gun/rndm off
+/mu/gun/rndm on
+#/mu/gun/rndm off
+#/mu/gun/rndm repeat
+#
+# set beam sample file
+/mu/gun/beamSample beamSample/sample_1200_good.txt
+#/mu/gun/beamSample beamSample/sample4_5420.txt
 #
 # set output file name
 #/mu/run/fileName data/mug2edm_0.root
+#
 #
 /random/setSeeds 18364293 54983657
 /run/beamOn 100

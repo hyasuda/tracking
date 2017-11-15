@@ -27,8 +27,8 @@ Edit CMakeLists.txt if needed and then do
 ## Run 
 To run execution file, do the following command for example  
 `./muong2edmsim macro/tmp_track_0.mac`  
-Output file name can be editted in include/ApplicationManager.hh  
-`  sprintf(filename,"data/mug2edm_%s_%s.root",buff,tok);`  
+Output file name can be changed by commenting out the line: /mu/run/fileName in macro/tmp_track_0.mac  
+Other available commands can be found in macro/tmp_track_0.mac  
 
 ## Visualization
 To enable OpenGL visualization, set  
