@@ -1,4 +1,5 @@
 #include "RunAction.hh"
+#include "RunActionMessenger.hh"
 #include "ApplicationManager.hh"
 
 #include "G4Run.hh"
@@ -12,8 +13,9 @@
 #include "TTree.h"
 
 
-RunAction::RunAction()
+RunAction::RunAction():theFileName("")
 {
+  runmessenger = new RunActionMessenger(this);
 
   // initialize root
   //  gROOT-> Reset();
@@ -47,7 +49,7 @@ void RunAction::BeginOfRunAction(const G4Run* aRun)
   ApplicationManager* application =
     ApplicationManager::GetApplicationManager();
   application -> SetEdepByRun( 0.0 );
-  application->Open();
+  application->Open(theFileName);
   application->Clear();
 ////DataBrokerEND///////////////
 

@@ -38,8 +38,6 @@ DetectorConstruction::DetectorConstruction(const G4int nvane)
   :defaultMaterial(0),fNvane(nvane),
    magField(0), mymagField(0)
 {
-  G4cout << "Number of vane = " << fNvane << G4endl;
-
   // materials
   DefineMaterials();
 
@@ -102,7 +100,7 @@ U->AddIsotope(U8, abundance= 10.*perCent);
 //
 // define simple materials
 //
-G4Material* Al = new G4Material("Aluminium", z=13., a=26.98*g/mole, density=2.699*g/cm3);
+//G4Material* Al = new G4Material("Aluminium", z=13., a=26.98*g/mole, density=2.699*g/cm3);
 //G4Material* LAr = new G4Material("liquidArgon", z=18., a= 39.95*g/mole, density= 1.390*g/cm3);
 G4Material* PurePb = new G4Material("Lead", z=82., a= 207.19*g/mole, density= 11.35*g/cm3);
 //G4Material* Fe = new G4Material("Fe", z= 26., a= 55.83*g/mole, density = 7.874*g/cm3);
@@ -285,18 +283,7 @@ G4cout << *(G4Material::GetMaterialTable()) << G4endl;
  subMat = G10_Plate;
  //tubeMat = LeadTangstate;
  tubeMat = PurePb;
- defaultMaterial1  = Al; 
- defaultMaterial2  = Air;
- defaultMaterial3  = WPb;
- defaultMaterial4  = PbWO4;
- defaultMaterial5  = PureSi;//Al;//Polycarbonate;
- defaultMaterial6  = LeadTangstate;
- defaultMaterial7  = Dyneema; 
- //defaultMaterial8  = PSF;
- defaultMaterial8  = Polymethylmethacrylate;
  //Al,Polycarbonate, Polymethylmethacrylate ,LeadTangstate
- //defaultMaterial3  = TPCGAS;
- //defaultMaterial5  = SiO2;
  fpcMat = Kapton;
  frameMat = CFRP;
  windowMat = Kapton;
@@ -404,6 +391,8 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter()
   //
   //virtual vane
   //
+  G4cout << "Number of vanes = " << fNvane << G4endl;
+
   sol_vvane = new G4Box("vvane", 0.5*vvaneW*mm, 0.5*vvaneT*mm, 0.5*vvaneH*mm);
   log_vvane = new G4LogicalVolume(sol_vvane,
 				  defaultMaterial,
@@ -684,8 +673,8 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter()
   //
   //G4double window_din = 218.*2.+tube_dout;
   //G4double window_dout = 218.2*2.+tube_dout;
-  G4double window_din = 300.*2;
-  G4double window_dout = 300.2*2.;
+  G4double window_din = 305.*2;
+  G4double window_dout = 305.1*2.;
 
   G4double windowH = 200.;
   sol_window = new G4Tubs("window",window_din/2*mm,window_dout/2*mm,windowH/2*mm,

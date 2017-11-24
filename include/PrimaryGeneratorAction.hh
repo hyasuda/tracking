@@ -20,6 +20,7 @@ public:
 
   void GeneratePrimaries(G4Event*);
   void SetRndmFlag(G4String val) { rndmFlag = val;}
+  void FillBeamSample(G4String sampleFileName);
 
 private:
   G4ParticleGun*                particleGun;	  //pointer a to G4  class
@@ -27,6 +28,7 @@ private:
     
   PrimaryGeneratorMessenger* gunMessenger;   //messenger of this class
   G4String                      rndmFlag;	  //flag for a rndm impact point
+  G4int nEvent;
 
   std::vector<G4double>  fBeamX;
   std::vector<G4double>  fBeamY;

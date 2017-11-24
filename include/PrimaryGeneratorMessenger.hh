@@ -21,6 +21,7 @@ private:
   PrimaryGeneratorAction*      Action;
   G4UIdirectory*               gunDir; 
   G4UIcmdWithAString*          RndmCmd;
+  G4UIcmdWithAString*          BeamSampleCmd;
 };
 
 

@@ -58,6 +58,7 @@ class ApplicationManager
     G4int theHitInfo;
     G4int theEventNum;
     G4int thePositronID;
+    G4int theBeamIndex;
     std::ofstream theFileStream;
 
   private:
@@ -149,6 +150,7 @@ class ApplicationManager
     G4int GetHitBody() const;
     G4int GetParID() const;
     G4int GetPositronID() const;
+    G4int GetBeamIndex() const { return theBeamIndex; }
     std::ofstream& GetFileStream();
     void SetEdepByEvent(G4double edep);
     void SetEdepByRun(G4double edep);
@@ -164,6 +166,7 @@ class ApplicationManager
     void SetHitBody(G4int theHitBodyTyp);
     void SetParID(G4int theParID);
     void SetPositronID(G4int trackID);
+    void SetBeamIndex(G4int beamIndex){ theBeamIndex = beamIndex; }
 
     void AddEdepByEvent(G4double edep);
     void AddEdepByRun(G4double edep);
@@ -174,7 +177,7 @@ class ApplicationManager
     TTree* GetNtupleBody() const;
     void Clear();
     void Update();
-    void Open();
+    void Open(G4String fileNameString);
     void Save();
     void Fill(G4double edep );
     void Fill(G4double x, G4double y, G4double edep);
@@ -399,23 +402,26 @@ inline void ApplicationManager::Clear()
   return;
 }
 
-inline void ApplicationManager::Open()
+inline void ApplicationManager::Open(G4String fileNameString)
 {
-  // 170113tyosioka
-  time_t now = time(NULL);
-  struct tm *pnow = localtime(&now);
-  char buff[128]="";
-  sprintf(buff,"%04d%02d%02d%02d%02d%02d",pnow->tm_year+1900,pnow->tm_mon + 1,pnow->tm_mday,pnow->tm_hour,pnow->tm_min,pnow->tm_sec);
-
-  char hostname[128];
-  gethostname(hostname, sizeof(hostname));
-  char del[] = ".";
-  char *tok;
-  tok = strtok(hostname,del);
-
   char filename[256];
-  sprintf(filename,"data/mug2edm_%s_%s.root",buff,tok);
+  if(fileNameString==""){
+    // 170113tyosioka
+    time_t now = time(NULL);
+    struct tm *pnow = localtime(&now);
+    char buff[128]="";
+    sprintf(buff,"%04d%02d%02d%02d%02d%02d",pnow->tm_year+1900,pnow->tm_mon + 1,pnow->tm_mday,pnow->tm_hour,pnow->tm_min,pnow->tm_sec);
+    
+    char hostname[128];
+    gethostname(hostname, sizeof(hostname));
+    char del[] = ".";
+    char *tok;
+    tok = strtok(hostname,del);
 
+    sprintf(filename,"data/mug2edm_%s_%s.root",buff,tok);
+  }else{
+    sprintf(filename,"%s",fileNameString.c_str());
+  }
   file= new TFile( filename, "RECREATE", "Geant4 User Application" );
   return;
 }
@@ -451,6 +457,7 @@ inline void ApplicationManager::ClearNtuple(G4int evtNum)
 {
 
   fEventNum= evtNum;
+
   for(int i=0;i<4;++i){
     DkEnergy[i] = 0;
     Dmomv_x[i] = 0;
@@ -461,7 +468,7 @@ inline void ApplicationManager::ClearNtuple(G4int evtNum)
     Dmom_z[i] = 0;
     DtEnergy[i]= 0;
     DPDG[i] = 0;
- }
+  }
 
   //kEnergy.clear();
   EachDepE.clear();
@@ -522,7 +529,6 @@ G4ThreeVector Dpos, G4ThreeVector Dmom, G4ThreeVector Dmomv, G4ThreeVector Dpol,
     Dpos_x = Dpos.x();
     Dpos_y = Dpos.y();
     Dpos_z = Dpos.z();
-  
   }
   DtEnergy[passID]= DTEnergy/MeV;
   DkEnergy[passID]= DKEnergy/MeV;

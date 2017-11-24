@@ -22,6 +22,7 @@ public:
     
     G4UIdirectory*             fMagDir;
     G4UIcmdWithAString*        fCalTypeCmd;
+    G4UIcmdWithAString*        fFieldFileCmd;
     G4UIcmdWithABool*          fWithSpinCmd;
 };
 
