@@ -4,6 +4,9 @@
 #/mu/mag/calType interpolationstorage
 #/mu/mag/calType strict
 #
+# set magnetic field file; calType should be set first!
+#/mu/mag/fieldFile FLDATA/20160422_Abe2017May-77_n15.txt
+#
 # set magnetic field spin tracking
 #/mu/mag/withSpin true
 /mu/mag/withSpin false

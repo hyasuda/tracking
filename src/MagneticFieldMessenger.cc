@@ -19,6 +19,12 @@ MagneticFieldMessenger::MagneticFieldMessenger(MagneticField* mag)
   fCalTypeCmd->SetCandidates("uniform interpolation interpolationstorage strict");
   fCalTypeCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
   
+  fFieldFileCmd = new G4UIcmdWithAString("/mu/mag/fieldFile", this);
+  fFieldFileCmd->SetGuidance("Set magnetic field calculation file");
+  fFieldFileCmd->SetParameterName("fieldFile",true);
+  //fFieldFileCmd->SetDefaultValue("FLDATA/20160422_Abe2017May-77_n15.txt");
+  fFieldFileCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
+
   fWithSpinCmd = new G4UIcmdWithABool("/mu/mag/withSpin", this);
   fWithSpinCmd->SetGuidance("choose MagneticField track spin");
   fWithSpinCmd->SetParameterName("WithSpin",true);
@@ -40,6 +46,10 @@ void MagneticFieldMessenger::SetNewValue(G4UIcommand* command,G4String newValue)
 { 
   if( command == fCalTypeCmd )
     { fMag->SetCalType(newValue);
+      /*fMag->FillFieldValue();*/ }
+
+  if( command == fFieldFileCmd )
+    { fMag->SetFieldFileName(newValue);
       fMag->FillFieldValue(); }
 
   if( command == fWithSpinCmd )

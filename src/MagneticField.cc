@@ -19,7 +19,7 @@
 MagneticField* MagneticField::object = 0;
 
 MagneticField::MagneticField()
-  : G4MagneticField(),pStepper(0),fEquation(0),fEquationSpin(0),fCalType("uniform"),fWithSpin(false)
+  : G4MagneticField(),pStepper(0),fEquation(0),fEquationSpin(0),fCalType("uniform"),fFieldFileName(""),fWithSpin(false)
 {
   object = this;
   updateField();
@@ -30,10 +30,14 @@ MagneticField::MagneticField()
 void MagneticField::FillFieldValue()
 {
   if(fCalType=="interpolation" ||
-     fCalType=="interpolationstorage" || 
-     fCalType=="strict"){
-    // weak focusing field interpolation
-    std::ifstream ifs("FLDATA/20160422_Abe2017May-77.txt"); // 5ko model
+    fCalType=="interpolationstorage" || 
+    fCalType=="strict"){
+    G4cout << "opening field file: " << fFieldFileName << G4endl;
+    std::ifstream ifs(fFieldFileName.c_str());
+    if(!ifs.is_open()){
+      G4cerr << "field file: " << fFieldFileName << " cannot be opend!" << G4endl;
+      return;
+    }
     G4int IDUM;
     ifs >> fNF;
     for(G4int i=0;i<fNF;++i){
@@ -158,7 +162,7 @@ void MagneticField::GetFieldValue( const G4double Point[4],G4double* Bfield ) co
 
   G4double Ex,Ey;
 
-  // uniform magnetic field
+  // uniform magnetic field: fCalType=="uniform"
   G4double Bz = 3.0*tesla;
   G4double Br = 0.*tesla;
 

@@ -39,9 +39,10 @@ PrimaryGeneratorAction::PrimaryGeneratorAction(
 
 void PrimaryGeneratorAction::FillBeamSample(G4String sampleFileName)
 {
+  G4cout << "opening beam sample file: " << sampleFileName << G4endl;
   std::ifstream ifs(sampleFileName.c_str());
   if(!ifs.is_open()){
-    G4cerr << "beam sample: " << sampleFileName.c_str() << " cannot be opend!" << G4endl;
+    G4cerr << "beam sample: " << sampleFileName << " cannot be opend!" << G4endl;
     return;
   }
   char buf[1024];

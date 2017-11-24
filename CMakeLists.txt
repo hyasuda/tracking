@@ -66,6 +66,7 @@ set(MUONGM2EDMSIM_SCRIPTS
   FLDATA/20160422_Abe2017May-5.txt
   FLDATA/20160422_Abe2017May-7.txt
   FLDATA/20160422_Abe2017May-77.txt
+  FLDATA/20160422_Abe2017May-77_n15.txt
   FLDATA/20160422_cm12weak.txt
   beamSample/sample_1200_good.txt
   beamSample/sample4_5420.txt
