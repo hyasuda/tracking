@@ -47,6 +47,7 @@ class DetectorConstruction : public G4VUserDetectorConstruction
   G4Material*        windowMat;
   
   G4Material*        defaultMaterial;
+  G4Material*        storageGas;
   G4double           WorldSize;
 
   

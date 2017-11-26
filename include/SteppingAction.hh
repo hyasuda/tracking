@@ -27,6 +27,8 @@ private:
   TFile *Geantfile;
   TH1D* hist_wiggle;
 
+  G4double fTimeStep;
+
   int eventNum;
   float primEnergy[4];//0=>mu+, 1=>e+, 2=>e-, 3=>gamma
   float pol_x,pol_y,pol_z;

@@ -120,6 +120,31 @@ H2O->AddElement(O, natoms=1);
 // overwrite computed meanExcitationEnergy with ICRU recommended value 
 H2O->GetIonisation()->SetMeanExcitationEnergy(75.0*eV);
 
+G4Material* N2m4 =
+  new G4Material("N2m4", density=1.12e-12*g/cm3, ncomponents=1, kStateGas, 
+		 300.*kelvin, 1.e-4*pascal);
+ N2m4->AddElement(N, natoms=2);
+
+G4Material* N2m3 =
+  new G4Material("N2m3", density=1.12e-11*g/cm3, ncomponents=1, kStateGas, 
+		 300.*kelvin, 1.e-3*pascal);
+ N2m3->AddElement(N, natoms=2);
+
+G4Material* N2m2 =
+  new G4Material("N2m2", density=1.12e-10*g/cm3, ncomponents=1, kStateGas, 
+		 300.*kelvin, 1.e-2*pascal);
+ N2m2->AddElement(N, natoms=2);
+
+G4Material* N2m1 =
+  new G4Material("N2m1", density=1.12e-9*g/cm3, ncomponents=1, kStateGas, 
+		 300.*kelvin, 1.e-1*pascal);
+ N2m1->AddElement(N, natoms=2);
+
+G4Material* N2m0 =
+  new G4Material("N2m0", density=1.12e-8*g/cm3, ncomponents=1, kStateGas, 
+		 300.*kelvin, 1.*pascal);
+ N2m0->AddElement(N, natoms=2);
+
 G4Material* Sci = 
 new G4Material("Scintillator", density= 1.032*g/cm3, ncomponents=2);
 Sci->AddElement(C, natoms=9);
@@ -284,6 +309,12 @@ G4cout << *(G4Material::GetMaterialTable()) << G4endl;
  //tubeMat = LeadTangstate;
  tubeMat = PurePb;
  //Al,Polycarbonate, Polymethylmethacrylate ,LeadTangstate
+ //storageGas = N2m2;
+ //storageGas = N2m3;
+ //storageGas = N2m4;
+ //storageGas = N2m1;
+ // storageGas = N2m0;
+ storageGas = Vacuum;
  fpcMat = Kapton;
  frameMat = CFRP;
  windowMat = Kapton;
@@ -332,8 +363,9 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter()
                    0.5*WorldSize*0.95, 0.5*WorldSize*0.95, 0.5*WorldSize*0.95);
                        
   logicFrame = new G4LogicalVolume(solidFrame,		
-                                   defaultMaterial,	
-                                   "Frame");		
+                                   //defaultMaterial,	
+                                   storageGas,
+				   "Frame");		
                                    
   physiFrame = new G4PVPlacement(0,			
   				 G4ThreeVector(),	
@@ -696,15 +728,16 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter()
   G4SDManager::GetSDMpointer()->AddNewDetector(bodySD);
   log_sensor->SetSensitiveDetector(bodySD);
 
+  
   G4UserLimits* stepLimit0;
   stepLimit0 = new  G4UserLimits(10*mm);// 1000*mm unpol 100*mm pol
+  //stepLimit0 = new  G4UserLimits(1*km);
   //G4UserLimits* stepLimit;
   //stepLimit = new  G4UserLimits(0.001*mm);// 1000*mm unpol 100*mm pol
 
-  
   logicFrame-> SetUserLimits(stepLimit0);
+  
 
- 
   //                                        
   // Visualization attributes
   //

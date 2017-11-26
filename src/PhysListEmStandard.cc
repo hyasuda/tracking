@@ -49,6 +49,9 @@
 #include "G4MuIonisation.hh"
 #include "G4MuBremsstrahlung.hh"
 #include "G4MuPairProduction.hh"
+#include "G4CoulombScattering.hh"
+#include "G4hCoulombScatteringModel.hh"
+#include "G4eCoulombScatteringModel.hh"
 
 #include "G4hMultipleScattering.hh"
 #include "G4hIonisation.hh"
@@ -140,7 +143,7 @@ void PhysListEmStandard::ConstructProcess()
   //    pmanager->AddProcess(new G4SynchrotronRadiation,      -1,-1,4);
   //    else
       pmanager->AddProcess(new G4SynchrotronRadiationInMat, -1,-1,4); 
-      pmanager->AddProcess(new G4StepLimiter(),-1,-1,5); //by ku
+      //pmanager->AddProcess(new G4StepLimiter(),-1,-1,5); //by ku
       	    
     } else if (particleName == "e+") {
       //positron
@@ -152,7 +155,7 @@ void PhysListEmStandard::ConstructProcess()
       pmanager->AddProcess(new G4eplusAnnihilation,   0,-1,4);
 
       pmanager->AddProcess(new G4SynchrotronRadiationInMat, -1,-1,5);       
-      pmanager->AddProcess(new G4StepLimiter(),-1,-1,6); //by ku
+      //pmanager->AddProcess(new G4StepLimiter(),-1,-1,6); //by ku
       
       /*
      // Construct processes for positron
@@ -184,7 +187,20 @@ void PhysListEmStandard::ConstructProcess()
       pmanager->AddProcess(new G4MuMultipleScattering,-1, 1,1);
       pmanager->AddProcess(new G4MuIonisation,      -1, 2,2);
       pmanager->AddProcess(new G4MuBremsstrahlung,  -1, 3,3);
-      pmanager->AddProcess(new G4MuPairProduction,  -1, 4,4);       
+      pmanager->AddProcess(new G4MuPairProduction,  -1, 4,4);     
+      //pmanager->AddProcess(new G4CoulombScattering, -1, -1,5);
+      
+      //pmanager->AddProcess(new G4MuMultipleScattering,-1, 1,1);
+      /*
+      pmanager->AddProcess(new G4MuIonisation,      -1, 1,1);
+      pmanager->AddProcess(new G4MuBremsstrahlung,  -1, 2,2);
+      pmanager->AddProcess(new G4MuPairProduction,  -1, 3,3);
+      G4CoulombScattering *cs = new G4CoulombScattering();
+      G4eCoulombScatteringModel *model = new G4eCoulombScatteringModel();
+      model->SetPolarAngleLimit(0.0);
+      cs->AddEmModel(0,model);
+      pmanager->AddProcess(cs);
+      */
       pmanager->AddProcess(new G4StepLimiter(),-1,-1,5); //by ku
     } else if( particleName == "GenericIon" ) { 
       pmanager->AddProcess(new G4hMultipleScattering,-1, 1,1);

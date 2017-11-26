@@ -34,6 +34,8 @@ PrimaryGeneratorAction::PrimaryGeneratorAction(
   G4ParticleDefinition* particle
     = particleTable->FindParticle(particleName="mu+");
 
+  particle->SetPDGStable(true);
+
   particleGun->SetParticleDefinition(particle);
 }
 
@@ -146,6 +148,10 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
     G4double poly0_temp = poly0;
     polx0 = polx0_temp*cos(phase)-poly0_temp*sin(phase);
     poly0 = -polx0_temp*sin(phase)+poly0_temp*cos(phase);
+  }else if(rndmFlag=="gaus"){
+    G4double rand = G4RandGauss::shoot(0.,1.);
+    py0 = cos(rand*1e-5);
+    pz0 = sin(rand*1e-5);
   }
 
   particleGun->SetParticleEnergy(Kmu*MeV);//Kinetic energy

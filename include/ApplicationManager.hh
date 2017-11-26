@@ -508,7 +508,8 @@ inline void ApplicationManager::ClearNtuple(G4int evtNum)
 
   fHitInfo=0;
   theHitInfo=0;
-  thePrevTime=0.;
+  //thePrevTime=0.;
+  thePrevTime=-1e9*second;
 
   return;
 }

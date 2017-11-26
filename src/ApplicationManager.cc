@@ -34,7 +34,8 @@ ApplicationManager::ApplicationManager()
   theEdepHist->GetYaxis()->SetTitle("Number of events");
   theEdepHist->SetFillColor(kBlue);
 
-  thePrevTime = 0.;
+  //thePrevTime = 0.;
+  thePrevTime = -1e9*second;
 
   // const G4ThreeVector BODY_SIZE(40*cm, 60*cm, 20*cm);
   G4double bodyx = 40*cm;
