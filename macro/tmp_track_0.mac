@@ -6,10 +6,14 @@
 #
 # set magnetic field file; calType should be set first!
 #/mu/mag/fieldFile FLDATA/20160422_Abe2017May-77_n15.txt
+#/mu/mag/fieldFile FLDATA/3CBs-Narrow-region-n3E-4-Abe20171120_n15.txt
 #
 # set magnetic field spin tracking
 #/mu/mag/withSpin true
 /mu/mag/withSpin false
+#
+# set nvane of detector
+/mu/det/nvanes 48
 #
 # set muon beam distribution on/off
 /mu/gun/rndm on
