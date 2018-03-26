@@ -2,6 +2,7 @@
 #include "PrimaryGeneratorAction.hh"
 #include "G4UIdirectory.hh"
 #include "G4UIcmdWithAString.hh"
+#include "G4UIcmdWithADouble.hh"
 
 
 PrimaryGeneratorMessenger::PrimaryGeneratorMessenger(
@@ -24,11 +25,35 @@ PrimaryGeneratorMessenger::PrimaryGeneratorMessenger(
   BeamSampleCmd->SetParameterName("beamSampleFile",true);
   BeamSampleCmd->SetDefaultValue("beamSample/sample_1200_good.txt");
   BeamSampleCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
+
+  BeamTypeCmd = new G4UIcmdWithAString("/mu/gun/beamType",this);
+  BeamTypeCmd->SetGuidance("Set beam type");
+  BeamTypeCmd->SetParameterName("beamType",true);
+  BeamTypeCmd->SetDefaultValue("storage");
+  BeamTypeCmd->SetCandidates("storage injection");
+  BeamTypeCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
+
+  BeamSpinRotCmd = new G4UIcmdWithAString("/mu/gun/beamSpinRot",this);
+  BeamSpinRotCmd->SetGuidance("Set beam spin rotation method");
+  BeamSpinRotCmd->SetParameterName("beamSpinRot",true);
+  BeamSpinRotCmd->SetDefaultValue("off");
+  BeamSpinRotCmd->SetCandidates("off on");
+  BeamSpinRotCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
+
+  BeamPolCmd = new G4UIcmdWithADouble("/mu/gun/beamPol",this);
+  BeamPolCmd->SetGuidance("Set beam polarization magnitude");
+  BeamPolCmd->SetParameterName("beamPol",true);
+  BeamPolCmd->SetDefaultValue(0.5);
+  BeamPolCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
 }
 
 
 PrimaryGeneratorMessenger::~PrimaryGeneratorMessenger()
 {
+  delete BeamPolCmd;
+  delete BeamSpinRotCmd;
+  delete BeamTypeCmd;
+  delete BeamSampleCmd;
   delete RndmCmd;
   delete gunDir;
 }
@@ -42,6 +67,15 @@ void PrimaryGeneratorMessenger::SetNewValue(
 
   if( command == BeamSampleCmd )
     { Action->FillBeamSample(newValue); }
+
+  if( command == BeamTypeCmd )
+    { Action->SetBeamType(newValue); }
+
+  if( command == BeamSpinRotCmd )
+    { Action->SetBeamSpinRotation(newValue); }
+
+  if( command == BeamPolCmd )
+    { Action->SetBeamPolarization(BeamPolCmd->GetNewDoubleValue(newValue)); }
 }
 
 

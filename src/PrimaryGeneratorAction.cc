@@ -18,7 +18,7 @@
 
 PrimaryGeneratorAction::PrimaryGeneratorAction(
                                              DetectorConstruction* DC)
-  :Detector(DC),rndmFlag("off"),nEvent(0)
+  :Detector(DC),rndmFlag("off"),fBeamType("storage"),fBeamSpinRot("off"),fBeamPol(0.5),nEvent(0)
 {
   G4int n_particle = 1;
   particleGun  = new G4ParticleGun(n_particle);
@@ -47,26 +47,57 @@ void PrimaryGeneratorAction::FillBeamSample(G4String sampleFileName)
     G4cerr << "beam sample: " << sampleFileName << " cannot be opend!" << G4endl;
     return;
   }
+
   char buf[1024];
   G4int count = 0;
-  G4double val[8];
-  while(!ifs.eof()){
-    ifs.getline(buf,1024);
-    if(ifs.eof()) break;
-    if(count>0){
-      strtok(buf,","); // id
-      for(unsigned int i=0; i<8; i++){
-	val[i] = strtod(strtok(NULL,","),NULL);
+  G4double val[20];
+  if( fBeamType=="storage" ){
+    while(true){
+      ifs.getline(buf,1024);
+      if(ifs.eof()) break;
+      if(count>0){
+	strtok(buf,","); // id
+	for(unsigned int i=0; i<8; i++){
+	  val[i] = strtod(strtok(NULL,","),NULL);
+	}
+	fBeamX.push_back(val[1]*m);
+	fBeamY.push_back(val[3]*m);
+	fBeamZ.push_back(val[2]*m);
+	fBeamPx.push_back(-val[4]);
+	fBeamPy.push_back(-val[6]);
+	fBeamPz.push_back(val[5]);
       }
-      fBeamX.push_back(val[1]);
-      fBeamY.push_back(val[3]);
-      fBeamZ.push_back(val[2]);
-      fBeamPx.push_back(-val[4]);
-      fBeamPy.push_back(-val[6]);
-      fBeamPz.push_back(val[5]);
+      count++;
     }
-    count++;
+  }else if( fBeamType=="injection" ){
+    G4double vel;
+    G4double beta;
+    G4double gamma;
+    const double mu_mass = G4MuonPlus::MuonPlus()->GetPDGMass()*MeV;
+    while(true){
+      ifs.getline(buf,1024);
+      if(ifs.eof()) break;
+      if(count>0){
+	strtok(buf,","); 
+	for(unsigned int i=0; i<17; i++){
+	  val[i] = strtod(strtok(NULL,","),NULL);
+	}
+	fBeamX.push_back(val[2]*cm);
+	fBeamY.push_back(val[4]*cm);
+	fBeamZ.push_back(val[3]*cm);
+	vel = sqrt(val[5]*val[5]+val[7]*val[7]+val[6]*val[6]);
+	fBeamPx.push_back(-val[5]/vel);
+	fBeamPy.push_back(-val[7]/vel);
+	fBeamPz.push_back(val[6]/vel);
+	vel *= (cm/second);
+	beta = vel/CLHEP::c_light;
+	gamma = 1./sqrt(1-beta*beta);
+	fBeamP.push_back(mu_mass*gamma*beta); // MeV/c
+      }
+      count++;
+    }
   }
+
   ifs.close();
 }
 
@@ -88,9 +119,11 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
   double Emu = sqrt(Pmu*Pmu+mu_mass*mu_mass);
   double Kmu = Emu-mu_mass;
 
-  G4double x0 = -0.333*m;//hiromiPOSITION
-  G4double y0 = 0*m; 
-  G4double z0 = 0*m;
+  //G4double x0 = -0.333*m;//hiromiPOSITION
+  G4double x0 = -0.3335404121*m;
+  G4double y0 = 0*m;
+  //G4double z0 = 0*m;
+  G4double z0 = 0.001517601425*mm;
 
   G4double px0 = 0.;
   G4double py0 = 1.;
@@ -118,9 +151,9 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
     ApplicationManager* application = ApplicationManager::GetApplicationManager();
     application->SetBeamIndex(index);
 
-    x0 = fBeamX.at(index)*m;
-    y0 = fBeamY.at(index)*m;
-    z0 = fBeamZ.at(index)*m;
+    x0 = fBeamX.at(index);
+    y0 = fBeamY.at(index);
+    z0 = fBeamZ.at(index);
 
     px0 = fBeamPx.at(index);
     py0 = fBeamPy.at(index);
@@ -130,24 +163,34 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
     poly0 = py0;
     polz0 = pz0;
 
+    if( fBeamP.size()>(unsigned int)index ){
+      Emu = sqrt(Pmu*Pmu+mu_mass*mu_mass);
+      Kmu = Emu-mu_mass;
+    }
+
     // polarization magnitude
-    const G4double polMag = 0.5;
-    G4double rand2 = G4UniformRand();
-    if(rand2<0.5*(1-polMag)){
-      polx0 = -polx0;
-      poly0 = -poly0;
-      polz0 = -polz0;
+    //const G4double polMag = 0.5;
+    if( fBeamPol<1. ){
+      G4double rand2 = G4UniformRand();
+      if(rand2<0.5*(1-fBeamPol)){
+	polx0 = -polx0;
+	poly0 = -poly0;
+	polz0 = -polz0;
+      }
     }
 
     // spin precession
-    const G4double omega = 2.9752/microsecond; 
-    const G4double spentTime = 220.*ns;
-    const G4double phase = spentTime*omega;
-    
-    G4double polx0_temp = polx0;
-    G4double poly0_temp = poly0;
-    polx0 = polx0_temp*cos(phase)-poly0_temp*sin(phase);
-    poly0 = -polx0_temp*sin(phase)+poly0_temp*cos(phase);
+    if( fBeamSpinRot=="on" ){
+      const G4double omega = 2.9752/microsecond; 
+      const G4double spentTime = 220.*ns;
+      const G4double phase = spentTime*omega;
+      
+      G4double polx0_temp = polx0;
+      G4double poly0_temp = poly0;
+      polx0 = polx0_temp*cos(phase)-poly0_temp*sin(phase);
+      poly0 = -polx0_temp*sin(phase)+poly0_temp*cos(phase);
+    }
+
   }else if(rndmFlag=="gaus"){
     G4double rand = G4RandGauss::shoot(0.,1.);
     py0 = cos(rand*1e-5);
