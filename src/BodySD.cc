@@ -102,81 +102,9 @@ G4bool BodySD::ProcessHits(G4Step* aStep, G4TouchableHistory*/* ROhist*/)
   G4double ktmpz = pos.z();
   */
   G4int pID=0;
-  /*std::ofstream fcpnum("fcopyNo.dat",std::ios::app);
-  fcpnum << pID << " " << copyNo << " " << motherCopyNo << " " << ktmpx << " " << ktmpy << " " << ktmpz << G4endl;
-  fcpnum.close();*/
 
   bodyTyp = 201;
   
-  /*bodyTyp=-1;
-  if(volumename=="Frame")bodyTyp=100; 
-  if(volumename=="testMaterial")bodyTyp=101; 
-  if(volumename=="BoxDetector")bodyTyp=102;//No material 
-  else bodyTyp=201;
-  if(volumename=="panel1")bodyTyp=201;//Si 
-  if(volumename=="panel1a")bodyTyp=301;//Si 
-  if(volumename=="panel1b")bodyTyp=401;//Si 
-  if(volumename=="panel1c")bodyTyp=501;//Si 
-  if(volumename=="panel1d")bodyTyp=601;//Si 
-  if(volumename=="panel1e")bodyTyp=701;//Si 
-  
-  if(volumename=="panel2")bodyTyp=202;//Si 
-  if(volumename=="panel2a")bodyTyp=302;//Si 
-  if(volumename=="panel2b")bodyTyp=402;//Si 
-  if(volumename=="panel2c")bodyTyp=502;//Si 
-  if(volumename=="panel2d")bodyTyp=602;//Si 
-  if(volumename=="panel2e")bodyTyp=702;//Si 
-  
-  if(volumename=="panel3")bodyTyp=203;//Si 
-  if(volumename=="panel3a")bodyTyp=303;//Si 
-  if(volumename=="panel3b")bodyTyp=403;//Si 
-  if(volumename=="panel3c")bodyTyp=503;//Si 
-  if(volumename=="panel3d")bodyTyp=603;//Si 
-  if(volumename=="panel3e")bodyTyp=703;//Si 
-  
-  if(volumename=="panel4")bodyTyp=204;//Si 
-  if(volumename=="panel4a")bodyTyp=304;//Si 
-  if(volumename=="panel4b")bodyTyp=404;//Si 
-  if(volumename=="panel4c")bodyTyp=504;//Si 
-  if(volumename=="panel4d")bodyTyp=604;//Si 
-  if(volumename=="panel4e")bodyTyp=704;//Si 
-  
-  if(volumename=="panel5")bodyTyp=205;//Si 
-  if(volumename=="panel5a")bodyTyp=305;//Si 
-  if(volumename=="panel5b")bodyTyp=405;//Si 
-  if(volumename=="panel5c")bodyTyp=505;//Si 
-  if(volumename=="panel5d")bodyTyp=605;//Si 
-  if(volumename=="panel5e")bodyTyp=705;//Si 
-  
-  if(volumename=="panel6")bodyTyp=206;//Si 
-  if(volumename=="panel6a")bodyTyp=306;//Si 
-  if(volumename=="panel6b")bodyTyp=406;//Si 
-  if(volumename=="panel6c")bodyTyp=506;//Si 
-  if(volumename=="panel6d")bodyTyp=606;//Si 
-  if(volumename=="panel6e")bodyTyp=706;//Si 
-  
-  if(volumename=="panel7")bodyTyp=207;//Si 
-  if(volumename=="panel7a")bodyTyp=307;//Si 
-  if(volumename=="panel7b")bodyTyp=407;//Si 
-  if(volumename=="panel7c")bodyTyp=507;//Si 
-  if(volumename=="panel7d")bodyTyp=607;//Si 
-  if(volumename=="panel7e")bodyTyp=707;//Si 
-  
-  if(volumename=="panel8")bodyTyp=208;//Si 
-  if(volumename=="panel8a")bodyTyp=308;//Si 
-  if(volumename=="panel8b")bodyTyp=408;//Si 
-  if(volumename=="panel8c")bodyTyp=508;//Si 
-  if(volumename=="panel8d")bodyTyp=608;//Si 
-  if(volumename=="panel8e")bodyTyp=708;//Si 
-  
-  if(volumename=="CenterW")bodyTyp=1000;//Calorimeter 
-  if(volumename=="CenterD"){
-    bodyTyp=1010;//LeadTangstate 
-    //  printf("ppp\n");getchar();
-  }
-  if(volumename=="CenterInP")bodyTyp=1020;//InnerPipe
-  */
-
   bodyStatus=0;
 
   if(volumename=="sensor"){

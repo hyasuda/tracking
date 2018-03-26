@@ -55,15 +55,11 @@ ApplicationManager::ApplicationManager()
 
   ntupleBody->Branch("bodyTyp",&bodyTyp);
   ntupleBody->Branch("bodyStatus",&bodyStatus);
-  //ntupleBody->Branch("chID",&chID);
   ntupleBody->Branch("pID",&fPID);
-  //ntupleBody->Branch("CurrentDepE",&CurrentDepE);
   ntupleBody->Branch("EachDepE",&EachDepE);
-  //ntupleBody->Branch("kEnergy",&kEnergy);
   ntupleBody->Branch("mom_x",&mom_x);
   ntupleBody->Branch("mom_y",&mom_y);
   ntupleBody->Branch("mom_z",&mom_z);
-  //ntupleBody->Branch("ptime",&ptime);
   ntupleBody->Branch("gtime",&gtime);
   ntupleBody->Branch("pos_x",&pos_x);
   ntupleBody->Branch("pos_y",&pos_y);
@@ -71,21 +67,14 @@ ApplicationManager::ApplicationManager()
   ntupleBody->Branch("tEnergy",&tEnergy);
   ntupleBody->Branch("isPrimary",&fIsPrimary);
   ntupleBody->Branch("trackID",&fTrackID);
-  //ntupleBody->Branch("stepLength",&fStepLength);
-  //ntupleBody->Branch("stepLengthTotal",&fStepLengthTotal);
 
   ntupleDecay= new TTree ("ntupleDecay","GEANT4 DecayTree");
   ntupleDecay->Branch("eventNum",&fEventNum,"eventNum/I");
   ntupleDecay->Branch("beamIndex",&theBeamIndex,"beamIndex/I");
-  //ntupleDecay->Branch("Dptime",&Dptime,"Dptime/F");
   ntupleDecay->Branch("Dgtime",&Dgtime,"Dgtime/F");
-  // ntupleDecay->Branch("DkEnergy",&DkEnergy,"DkEnergy[4]/F");
   ntupleDecay->Branch("Dmom_x",&Dmom_x,"Dmom_x[4]/F");
   ntupleDecay->Branch("Dmom_y",&Dmom_y,"Dmom_y[4]/F");
   ntupleDecay->Branch("Dmom_z",&Dmom_z,"Dmom_z[4]/F");
-  //ntupleDecay->Branch("Dmomv_x",&Dmomv_x,"Dmomv_x[4]/F");
-  //ntupleDecay->Branch("Dmomv_y",&Dmomv_y,"Dmomv_y[4]/F");
-  //ntupleDecay->Branch("Dmomv_z",&Dmomv_z,"Dmomv_z[4]/F");
   ntupleDecay->Branch("Dpol_x",&Dpol_x,"Dpol_x/F");
   ntupleDecay->Branch("Dpol_y",&Dpol_y,"Dpol_y/F");
   ntupleDecay->Branch("Dpol_z",&Dpol_z,"Dpol_z/F");
