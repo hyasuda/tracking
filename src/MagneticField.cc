@@ -21,7 +21,9 @@ MagneticField* MagneticField::object = 0;
 MagneticField::MagneticField()
   : G4MagneticField(),pStepper(0),fEquation(0),fEquationSpin(0),fCalType("uniform"),fFieldFileName(""),fKickerCalType("off"),fKickerFieldFileName(""),fWithSpin(false),
     // weak B-field constants
-    fXMU(4.E-7),                                                
+    fXMU(4.E-7),
+    fFLRMin(1.), // m
+    fFLZMin(1.), // m
     // kicker constants
     fFacB(2.596),
     fStart_kick(0*ns),
@@ -51,9 +53,17 @@ void MagneticField::FillFieldValue()
     ifs >> fNF;
     for(G4int i=0;i<fNF;++i){
       ifs >> IDUM >> fFLR[i] >> fFLZ[i] >> fFLCRNT[i];
+      if( fFLR[i]<fFLRMin && abs(fFLZ[i])<fFLZMin ){
+	if( fFLR[i]>abs(fFLZ[i]) ){
+	  fFLRMin = fFLR[i];
+	}else{
+	  fFLZMin = abs(fFLZ[i]);
+	}
+      }
     }
     ifs.close();
-    
+    G4cout << "FLRMin = " << fFLRMin << " FLZMin = " << fFLZMin << G4endl;
+
     fGraph_Bz = new TGraph2D;
     fGraph_Br = new TGraph2D;
     
@@ -212,7 +222,7 @@ void MagneticField::GetFieldValue( const G4double Point[4],G4double* Bfield ) co
 
   G4double Bx,By;
  
-  G4double posR=sqrt(pow(Point[0],2)+pow(Point[1],2));
+  G4double posR=sqrt(Point[0]*Point[0]+Point[1]*Point[1]);
   G4double cos_theta,sin_theta;
 
   if(fCalType=="interpolation" || fCalType=="interpolationstorage"){
@@ -279,15 +289,26 @@ void MagneticField::bflfit(double RM,double ZM,double &BR,double &BZ,double &APH
   BR=0.0;
   BZ=0.0;
   APHI=0.0;
-  G4double DDD,DBR=0.,DBZ=0.,DAPHI=0.;
-  for(G4int i=0;i<fNF;++i){
-    DDD = (fFLR[i]-RM)*(fFLR[i]-RM)+(fFLZ[i]-ZM)*(fFLZ[i]-ZM);
-    if(DDD!=0.){
-      bfield(fFLR[i],fFLZ[i],fFLCRNT[i],RM,ZM,DBR,DBZ,DAPHI);  
+  G4double DBR=0.,DBZ=0.,DAPHI=0.;
+
+  if( RM<fFLRMin && abs(ZM)<fFLZMin ){
+    for(G4int i=0; i<fNF;++i){
+      bfield(fFLR[i],fFLZ[i],fFLCRNT[i],RM,ZM,DBR,DBZ,DAPHI);
+      BR += DBR;
+      BZ += DBZ;
+      APHI += DAPHI;
     }
-    BR += DBR;
-    BZ += DBZ;
-    APHI += DAPHI;
+  }else{
+    G4double DDD;
+    for(G4int i=0;i<fNF;++i){
+      DDD = (fFLR[i]-RM)*(fFLR[i]-RM)+(fFLZ[i]-ZM)*(fFLZ[i]-ZM);
+      if(DDD!=0.){
+	bfield(fFLR[i],fFLZ[i],fFLCRNT[i],RM,ZM,DBR,DBZ,DAPHI);  
+      }
+      BR += DBR;
+      BZ += DBZ;
+      APHI += DAPHI;
+    }
   }
 }
 
@@ -304,25 +325,20 @@ void MagneticField::bfield(double CR,double CZ,double CI,double RI,double ZJ,dou
   G4double S =RI*RI+CR*CR+(ZJ-CZ)*(ZJ-CZ);                                  
   G4double P =2*RI*CR;                                                  
   G4double RK=(P+P)/(double)(S+P);  
-  G4double PSI;
-  G4double ELPK,ELPE,ILL; 
-  cep12d(RK,ELPK,ELPE,ILL);                                  
+  //G4double PSI;
+  G4double ELPK,ELPE;
+  cep12d(RK,ELPK,ELPE);
   
-  if(ILL==0){                                          
-    RK=sqrt(RK);                                                    
-    BZ =fXMU*CI/(2.* sqrt(S+P))*(ELPK-(S-2.*CR*CR)/(S-P)*ELPE);    
-    BR =fXMU*CI/(2.* sqrt(S+P))*(ZJ-CZ)/RI*(-ELPK+ S/(S-P)*ELPE);    
-    PSI=CI/RK*sqrt(RI*CR)*((1.-0.5*RK*RK)*ELPK-ELPE);            
-    APHI=fXMU*PSI/RI;          
-  }else{
-    BZ = 0.;
-    BR = 0.;
-    APHI = 0.;
-  }
+  RK=sqrt(RK);                                                    
+  BZ =fXMU*CI/(2.* sqrt(S+P))*(ELPK-(S-2.*CR*CR)/(S-P)*ELPE);    
+  BR =fXMU*CI/(2.* sqrt(S+P))*(ZJ-CZ)/RI*(-ELPK+ S/(S-P)*ELPE);    
+  //PSI=CI/RK*sqrt(RI*CR)*((1.-0.5*RK*RK)*ELPK-ELPE);            
+  //APHI=fXMU*PSI/RI;
+  APHI=fXMU*CI*sqrt(RI*CR)*((1.-0.5*RK*RK)*ELPK-ELPE)/(RK*RI);
 }         
 //---------------------------------------------------------------------  
-void MagneticField::cep12d(double RK,double &AK,double &AE,double &ILL) const
-{                                
+void MagneticField::cep12d(double RK,double &AK,double &AE) const
+{
   /*
     DATA  AZ,A1,A2,A3,A4/  1.38629436112D0,0.09666344259D0,      
     A                           0.03590092383D0,0.03742563713D0,      
@@ -360,24 +376,19 @@ void MagneticField::cep12d(double RK,double &AK,double &AE,double &ILL) const
   double EB3=0.04069697526E0;
   double EB4=0.00526449639E0;
 
-  ILL=0;                                                           
   double XM1,XM2,XM3,XM4,ALXM;
   double BZZ;
-  if(RK<0. || RK>1.){               
-    ILL=1;                                                            
-    AK=0.0;                                                            
-    AE=0.0;                                                            
-  }else{
-    XM1=1.-RK;                                                      
-    XM2=XM1*XM1;                                                      
-    XM3=XM2*XM1;                                                      
-    XM4=XM3*XM1;  
-    ALXM=-log(XM1);                                                
-    BZZ=BZ+B1*XM1+B2*XM2+B3*XM3+B4*XM4;                                
-    AK= AZ+A1*XM1+A2*XM2+A3*XM3+A4*XM4 + BZZ*ALXM;                    
-    BZZ=EBZ+EB1*XM1+EB2*XM2+EB3*XM3+EB4*XM4;                      
-    AE=EAZ+EA1*XM1+EA2*XM2+EA3*XM3+EA4*XM4+BZZ*ALXM;              
-  }
+
+  // RK>0. && RK<1. is satisfied by definition
+  XM1=1.-RK;                                                      
+  XM2=XM1*XM1;                                                      
+  XM3=XM2*XM1;                                                      
+  XM4=XM3*XM1;  
+  ALXM=-log(XM1);                                                
+  BZZ=BZ+B1*XM1+B2*XM2+B3*XM3+B4*XM4;                                
+  AK= AZ+A1*XM1+A2*XM2+A3*XM3+A4*XM4 + BZZ*ALXM;                    
+  BZZ=EBZ+EB1*XM1+EB2*XM2+EB3*XM3+EB4*XM4;                      
+  AE=EAZ+EA1*XM1+EA2*XM2+EA3*XM3+EA4*XM4+BZZ*ALXM;              
 }                                                            
 
 

@@ -48,7 +48,7 @@ class MagneticField
 
     void bflfit(double RM,double ZM,double &BR,double &BZ,double &APHI) const;
     void bfield(double CR,double CZ,double CI,double RI,double ZJ,double &BR,double &BZ,double &APHI) const;
-    void cep12d(double RK,double &AK,double &AE,double &ILL) const;
+    void cep12d(double RK,double &AK,double &AE) const;
     void kickSpatial(const G4double x[3], G4double &BRkick0, G4double &BYkick0) const;
     void kickMag(const G4double t, const G4double BRkick0, const G4double BYkick0, G4double &BRkick, G4double &BYkick) const;
 
@@ -66,6 +66,7 @@ private:
   const G4double fXMU;
   G4int     fNF;
   G4double  fFLR[500],fFLZ[500],fFLCRNT[500];
+  G4double  fFLRMin,fFLZMin;
   TGraph2D *fGraph_Bz;
   TGraph2D *fGraph_Br;
 
