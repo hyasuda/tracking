@@ -1,15 +1,32 @@
 # set magnetic field calculation type
 /mu/mag/calType uniform
 #/mu/mag/calType interpolation
+#/mu/mag/calType interpolationstorage
 #/mu/mag/calType strict
+#
+# set magnetic field file; calType should be set first!
+#/mu/mag/fieldFile FLDATA/20160422_Abe2017May-77_n15.txt
+#/mu/mag/fieldFile FLDATA/3CBs-Narrow-region-n3E-4-Abe20171120_n15.txt
 #
 # set magnetic field spin tracking
 #/mu/mag/withSpin true
 /mu/mag/withSpin false
 #
+# set nvane of detector
+/mu/det/nvanes 48
+#
 # set muon beam distribution on/off
-#/mu/gun/rndm on
-/mu/gun/rndm off
+/mu/gun/rndm on
+#/mu/gun/rndm off
+#/mu/gun/rndm repeat
+#
+# set beam sample file
+/mu/gun/beamSample beamSample/sample_1200_good.txt
+#/mu/gun/beamSample beamSample/sample4_5420.txt
+#
+# set output file name
+#/mu/run/fileName data/mug2edm_0.root
+#
 #
 /random/setSeeds 18364293 54983657
 /run/beamOn 100

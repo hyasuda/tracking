@@ -30,7 +30,7 @@ class DetectorMessenger: public G4UImessenger
     G4UIcmdWithADoubleAndUnit* AbsThickCmd;
     G4UIcmdWithADoubleAndUnit* GapThickCmd;
     G4UIcmdWithADoubleAndUnit* SizeYZCmd;
-    G4UIcmdWithAnInteger*      NbLayersCmd;    
+    G4UIcmdWithAnInteger*      NbVanesCmd;    
     G4UIcmdWithADoubleAndUnit* MagFieldCmd;
     G4UIcmdWithoutParameter*   UpdateCmd;
 };

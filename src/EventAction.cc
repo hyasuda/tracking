@@ -128,6 +128,7 @@ void EventAction::EndOfEventAction(const G4Event* evt)
   application->FillNtuple();
   application->Fill(edep/MeV);
   printf("EndOfEventAction eventNum=%d hitInfo=%d dep=%lf\n",eventNum,hitInfo,edep/MeV);
+  application->SetBeamIndex(-1);
 
   application->Update();
 ///DataBrokerEND///////////////////////

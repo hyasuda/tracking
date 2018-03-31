@@ -27,12 +27,12 @@ class DetectorConstruction : public G4VUserDetectorConstruction
    ~DetectorConstruction();
 
   public:
-  void SetMagField(/*G4double*/);
-     
-     G4VPhysicalVolume* Construct();
+    void SetMagField(/*G4double*/);
+    void SetNumberOfVanes(G4int nvane){fNvane=nvane;}
+    G4VPhysicalVolume* Construct();
 
-     void UpdateGeometry();
-     
+    void UpdateGeometry();
+      
   public:
   
      void PrintCalorParameters(); 
@@ -47,14 +47,6 @@ class DetectorConstruction : public G4VUserDetectorConstruction
   G4Material*        windowMat;
   
   G4Material*        defaultMaterial;
-  G4Material*        defaultMaterial1;
-  G4Material*        defaultMaterial2;
-  G4Material*        defaultMaterial3;
-  G4Material*        defaultMaterial4;
-  G4Material*        defaultMaterial5;
-  G4Material*        defaultMaterial6;
-  G4Material*        defaultMaterial7;
-  G4Material*        defaultMaterial8;
   G4double           WorldSize;
 
   

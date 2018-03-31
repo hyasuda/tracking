@@ -1,6 +1,7 @@
 #include "PrimaryGeneratorAction.hh"
 #include "DetectorConstruction.hh"
 #include "PrimaryGeneratorMessenger.hh"
+#include "ApplicationManager.hh"
 #include "G4Event.hh"
 #include "G4ParticleGun.hh"
 #include "G4ParticleTable.hh"
@@ -17,7 +18,7 @@
 
 PrimaryGeneratorAction::PrimaryGeneratorAction(
                                              DetectorConstruction* DC)
-:Detector(DC),rndmFlag("off")
+  :Detector(DC),rndmFlag("off"),nEvent(0)
 {
   G4int n_particle = 1;
   particleGun  = new G4ParticleGun(n_particle);
@@ -34,8 +35,16 @@ PrimaryGeneratorAction::PrimaryGeneratorAction(
     = particleTable->FindParticle(particleName="mu+");
 
   particleGun->SetParticleDefinition(particle);
+}
 
-  std::ifstream ifs("beamSample/sample_1200_good.txt");
+void PrimaryGeneratorAction::FillBeamSample(G4String sampleFileName)
+{
+  G4cout << "opening beam sample file: " << sampleFileName << G4endl;
+  std::ifstream ifs(sampleFileName.c_str());
+  if(!ifs.is_open()){
+    G4cerr << "beam sample: " << sampleFileName << " cannot be opend!" << G4endl;
+    return;
+  }
   char buf[1024];
   G4int count = 0;
   G4double val[8];
@@ -57,7 +66,6 @@ PrimaryGeneratorAction::PrimaryGeneratorAction(
     count++;
   }
   ifs.close();
-
 }
 
 
@@ -90,16 +98,31 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
   G4double poly0 = 1.;
   G4double polz0 = 0.;
 
-  if(rndmFlag=="on"){
-    G4double rand = G4UniformRand();
-    G4int randI = (G4int)(fBeamX.size()*rand);
-    x0 = fBeamX.at(randI)*m;
-    y0 = fBeamY.at(randI)*m;
-    z0 = fBeamZ.at(randI)*m;
+  if(rndmFlag=="on" || rndmFlag=="repeat"){
+    if(fBeamX.size()==0){
+      G4cerr << "**********************************" << G4endl;
+      G4cerr << "* Beam sample file is not set!!! *" << G4endl;
+      G4cerr << "**********************************" << G4endl;
+      return;
+    }
 
-    px0 = fBeamPx.at(randI);
-    py0 = fBeamPy.at(randI);
-    pz0 = fBeamPz.at(randI);
+    G4int index = 0;
+    if(rndmFlag=="on"){
+      G4double rand = G4UniformRand();
+      index = (G4int)(fBeamX.size()*rand);
+    }else if(rndmFlag=="repeat"){
+      index = nEvent%fBeamX.size();
+    }
+    ApplicationManager* application = ApplicationManager::GetApplicationManager();
+    application->SetBeamIndex(index);
+
+    x0 = fBeamX.at(index)*m;
+    y0 = fBeamY.at(index)*m;
+    z0 = fBeamZ.at(index)*m;
+
+    px0 = fBeamPx.at(index);
+    py0 = fBeamPy.at(index);
+    pz0 = fBeamPz.at(index);
 
     polx0 = px0;
     poly0 = py0;
@@ -132,6 +155,8 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
   particleGun->SetParticleMomentumDirection(G4ThreeVector(px0,py0,pz0));//Initial momentum direction
   
   particleGun->GeneratePrimaryVertex(anEvent);
+
+  nEvent++;
 }
 
 

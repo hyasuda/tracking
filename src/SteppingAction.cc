@@ -137,7 +137,7 @@ void SteppingAction::UserSteppingAction(const G4Step* aStep)
 	 passID=-1;
        }
 
-       eventNum=application->GetEventNum();
+       //eventNum=application->GetEventNum();
        application->PutDecayValue(eventNum,KE/MeV, TE/MeV,pos, mom, momv, pol,Gtime, Ptime, passID);
      }//END for ( ; p != secondary->end(); ++p) {
 

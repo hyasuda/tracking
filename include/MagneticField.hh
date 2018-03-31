@@ -39,7 +39,9 @@ class MagneticField
   public:
     void GetFieldValue( const G4double Point[4],  G4double* Bfield ) const;
     void SetCalType( const G4String val ){ fCalType = val; }
+    void SetFieldFileName( const G4String val ){ fFieldFileName = val; }
     void SetWithSpin( const G4bool val ){ fWithSpin = val; }
+    void FillFieldValue();
 
     void bflfit(int NF,double FLR[500],double FLZ[500],double FLCRNT[500],double RM,double ZM,double &BR,double &BZ,double &APHI);
     void bfield(double CR,double CZ,double CI,double RI,double ZJ,double &BR,double &BZ,double &APHI) const;
@@ -50,6 +52,7 @@ private:
 
   MagneticFieldMessenger* fMagFieldMessenger;
   G4String fCalType;
+  G4String fFieldFileName;
   G4bool   fWithSpin;
 
   G4int fNF;
