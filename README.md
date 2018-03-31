@@ -3,7 +3,7 @@ detectorSimulation
 
 This is Geant4 simulation for muon g-2/EDM detector
 
-# Usage
+# detectorSimulation usage
 ## Set enviroment for ROOT and Geant4
 (at bepp)  
 `source /gluster/share/share_root6_ssd01.sh`  
