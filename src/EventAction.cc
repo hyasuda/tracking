@@ -36,37 +36,35 @@ EventAction::~EventAction()
 
 void EventAction::BeginOfEventAction(const G4Event* evt)
 {  
- G4int evtNb = evt->GetEventID();
- extern G4int DokodemoBango;
+  G4int evtNb = evt->GetEventID();
+  extern G4int DokodemoBango;
   DokodemoBango=evtNb;
- extern G4int PickBegin;
+  extern G4int PickBegin;
   PickBegin=0;
- if (evtNb%printModulo == 0) { 
-   G4cout << "\n---> Begin of event: " << evtNb << G4endl;
-   CLHEP::HepRandom::showEngineStatus();
- }
+  if (evtNb%printModulo == 0) { 
+    G4cout << "\n---> Begin of event: " << evtNb << G4endl;
+    CLHEP::HepRandom::showEngineStatus();
+  }
  
- // initialisation per event
- EnergyAbs = EnergyGap = 0.;
- TrackLAbs = TrackLGap = 0.;
+  // initialisation per event
+  EnergyAbs = EnergyGap = 0.;
+  TrackLAbs = TrackLGap = 0.;
 
- //DataBroker 
- ApplicationManager* application = 
-   ApplicationManager::GetApplicationManager();
+  //DataBroker 
+  ApplicationManager* application = 
+    ApplicationManager::GetApplicationManager();
+  
+  application->SetEventNum(evtNb);
+  application->ClearNtuple();
 
- //application->SetEdepByEvent(0.0);
-
- application->SetEventNum(evtNb);
- application->ClearNtuple();
-
-///DataBrokerEND///////////////////////
+  ///DataBrokerEND///////////////////////
 }
 
 void EventAction::EndOfEventAction(const G4Event* evt)
 {
-
+  
   G4SDManager* SDManager= G4SDManager::GetSDMpointer();
-
+  
   // get "Hit Collection of This Event"
   G4HCofThisEvent* HCTE= evt-> GetHCofThisEvent();
   if(! HCTE) return;
@@ -111,17 +109,11 @@ void EventAction::EndOfEventAction(const G4Event* evt)
   }
 
   //DataBroker 
-  ApplicationManager* application = 
-    ApplicationManager::GetApplicationManager();
+  ApplicationManager* application =  ApplicationManager::GetApplicationManager();
 
-  G4double edep = application->GetEdepByEvent();
-
-  int hitInfo=application->GetHitInfo();
-  int eventNum=-1;//application->GetEventNum();
   application->FillDecayNtuple();
   application->FillNtuple();
   application->FillTransportNtuple();
-  printf("EndOfEventAction eventNum=%d hitInfo=%d dep=%lf\n",eventNum,hitInfo,edep/MeV);
   application->SetBeamIndex(-1);
 
   application->Update();

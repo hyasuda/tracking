@@ -75,7 +75,7 @@ void MagneticFieldMessenger::SetNewValue(G4UIcommand* command,G4String newValue)
       fMag->FillKickerFieldValue(); }
 
   if( command == fWithSpinCmd )
-    { fMag->SetWithSpin(newValue);
+    { fMag->SetWithSpin( fWithSpinCmd->GetNewBoolValue(newValue) );
       fMag->updateField(); }
 }
 

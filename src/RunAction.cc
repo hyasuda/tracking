@@ -45,13 +45,11 @@ void RunAction::BeginOfRunAction(const G4Run* aRun)
   sumEAbs = sum2EAbs =sumEGap = sum2EGap = 0.;
   sumLAbs = sum2LAbs =sumLGap = sum2LGap = 0.; 
 
-//DataBroker 
-  ApplicationManager* application =
-    ApplicationManager::GetApplicationManager();
-  application -> SetEdepByRun( 0.0 );
+  //DataBroker 
+  ApplicationManager* application = ApplicationManager::GetApplicationManager();
   application->Open(theFileName);
   application->Clear();
-////DataBrokerEND///////////////
+  ////DataBrokerEND///////////////
 
   hist_shower->Reset();
   printf("hist_shower Reset\n");
@@ -112,21 +110,15 @@ void RunAction::EndOfRunAction(const G4Run* aRun)
      << "\n------------------------------------------------------------\n"
      << G4endl;   
 
-//DataBroker 
-  ApplicationManager* application =
-    ApplicationManager::GetApplicationManager();
-
-  G4double total = application -> GetEdepByRun();
-
-  G4cout << "----" << G4endl;
-  G4cout << "TOTAL:" << total/MeV << "MeV" << G4endl;
+  //DataBroker 
+  ApplicationManager* application = ApplicationManager::GetApplicationManager();
 
   std::ofstream& ofs = application -> GetFileStream();
   ofs.close();
 
   application->Update();
   application->Save();
-/////DataBrokerEND///////////////
+  /////DataBrokerEND///////////////
 
 }
 

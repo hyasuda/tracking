@@ -88,9 +88,8 @@ G4bool BodySD::ProcessHits(G4Step* aStep, G4TouchableHistory*/* ROhist*/)
   G4String materialname = material->GetName();
   //G4double density = material->GetDensity();
 
-  G4double ptime,gtime,tE,kE;
+  G4double gtime,tE;
   G4ThreeVector mom,pos;
-  G4int  hitInfo=application->GetHitInfo();
   G4String procName = aStep->GetPostStepPoint()->GetProcessDefinedStep()->GetProcessName();
 
   G4int pID=0;
@@ -103,30 +102,16 @@ G4bool BodySD::ProcessHits(G4Step* aStep, G4TouchableHistory*/* ROhist*/)
     if( pointIn==fGeomBoundary || pointIn==fAlongStepDoItProc || pointIn==fUndefined ) bodyStatus += 0x01;
     if( pointOut==fGeomBoundary || pointOut==fAlongStepDoItProc ) bodyStatus += 0x02;
 
-    hitInfo++;
-    
     mom = track->GetMomentum();
     pos = track->GetPosition();
-    ptime = track->GetProperTime();//nsec
     gtime = track->GetGlobalTime();//nsec
     tE= track->GetTotalEnergy();
-    kE = track->GetKineticEnergy();
     
     G4int id= bodyTyp;
     if(id<0)id=0;
     if(id>=2000)id=1999;
     edepbuf[id]+= pos.x()/mm;
-    
-    application->SetHitPosition(pos);
-    application->SetHitMomentum(mom);
-    application->SetHitKEnergy(kE);
-    application->SetHitTEnergy(tE);
-    application->SetHitGtime(gtime);
-    application->SetHitPtime(ptime);
-    
-    application->AddEdepByEvent(totaledep);
-    application->AddEdepByRun(totaledep);
-    
+
     G4int isPrimary = 0;
     G4int trackID = track->GetTrackID();
 
@@ -156,13 +141,11 @@ G4bool BodySD::ProcessHits(G4Step* aStep, G4TouchableHistory*/* ROhist*/)
     }   
     
     if(bodyStatus > 0 && unsummedDepE>0.){
-      application->PutNtupleValue(pID,tE/MeV, pos/mm, mom, gtime, bodyTyp, bodyStatus, hitInfo, unsummedDepE/MeV,isPrimary,trackID);
+      application->PutNtupleValue(pID,tE/MeV, pos/mm, mom, gtime, bodyTyp, bodyStatus, /*hitInfo,*/ unsummedDepE/MeV,isPrimary,trackID);
       unsummedDepE = 0.;
     }
   }
   
-  application->SetHitInfo(hitInfo);
-
   return true;
 }
 /////////////////////////////////////////////////

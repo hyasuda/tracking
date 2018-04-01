@@ -1,6 +1,7 @@
 #include "SteppingAction.hh"
 #include "DetectorConstruction.hh"
 #include "EventAction.hh"
+#include "SteppingActionMessenger.hh"
 #include "G4Step.hh"
 #include "ApplicationManager.hh"
 #include "G4VPhysicalVolume.hh"
@@ -25,11 +26,15 @@
 SteppingAction::SteppingAction(DetectorConstruction* det,
 			       EventAction* evt)
   :detector(det), eventaction(evt), fTimeStep(1.*ns) 
-{}
+{
+  fMessenger = new SteppingActionMessenger(this);
+}
 
 
 SteppingAction::~SteppingAction()
-{}
+{
+  delete fMessenger;
+}
 
 
 void SteppingAction::UserSteppingAction(const G4Step* aStep)
@@ -51,18 +56,20 @@ void SteppingAction::UserSteppingAction(const G4Step* aStep)
     track->SetTrackStatus(fStopAndKill);
   }
 
-  if(gtime_all-application->GetPrevTime()>=fTimeStep){
-    //G4cout << "gtime = " << gtime_all << " muon r = " << track->GetPosition().perp() << " z = " << track->GetPosition().z() << " pz' = " << track->GetMomentum().z()/track->GetMomentum().mag() << G4endl;
-    if( gtime_all-application->GetPrevTime()>=2*fTimeStep && application->GetPrevTime()>0. ) G4cout << "there is missed step" << G4endl;
-    application->SetPrevTime((G4int)(gtime_all/fTimeStep)*fTimeStep);
-
-    if(track->GetDefinition()->GetParticleName()=="mu+"){
-      MagneticField *mymagField = MagneticField::getObject();
-      G4double point[4] = {track->GetPosition().x(),track->GetPosition().y(),track->GetPosition().z(),gtime_all};
-      G4double Bfield[6];
-      mymagField->GetFieldValue(point, Bfield);
-      G4ThreeVector Bmag(Bfield[0],Bfield[1],Bfield[2]);
-      application->PutTransportValue(application->GetEventNum(), track->GetTotalEnergy(), track->GetMomentum(), gtime_all, track->GetPosition(), track->GetPolarization(), Bmag);
+  if( fSaveStep ){
+    if(gtime_all-application->GetPrevTime()>=fTimeStep){
+      //G4cout << "gtime = " << gtime_all << " muon r = " << track->GetPosition().perp() << " z = " << track->GetPosition().z() << " pz' = " << track->GetMomentum().z()/track->GetMomentum().mag() << G4endl;
+      if( gtime_all-application->GetPrevTime()>=2*fTimeStep && application->GetPrevTime()>0. ) G4cout << "there is missed step" << G4endl;
+      application->SetPrevTime((G4int)(gtime_all/fTimeStep)*fTimeStep);
+      
+      if(track->GetDefinition()->GetParticleName()=="mu+"){
+	MagneticField *mymagField = MagneticField::getObject();
+	G4double point[4] = {track->GetPosition().x(),track->GetPosition().y(),track->GetPosition().z(),gtime_all};
+	G4double Bfield[6];
+	mymagField->GetFieldValue(point, Bfield);
+	G4ThreeVector Bmag(Bfield[0],Bfield[1],Bfield[2]);
+	application->PutTransportValue(track->GetTotalEnergy(), track->GetMomentum(), gtime_all, track->GetPosition(), track->GetPolarization(), Bmag);
+      }
     }
   }
 

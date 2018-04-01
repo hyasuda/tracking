@@ -6,6 +6,7 @@
 
 class DetectorConstruction;
 class EventAction;
+class SteppingActionMessenger;
 class TTree;
 class TFile;
 class TH1D;
@@ -18,16 +19,19 @@ public:
   virtual ~SteppingAction();
 
   void UserSteppingAction(const G4Step*);
-    
+  void SetSaveStep(const G4bool saveStep){ fSaveStep=saveStep; }
+
 private:
   DetectorConstruction* detector;
   EventAction*          eventaction;  
+  SteppingActionMessenger* fMessenger;
 
   TTree *ntuple;
   TFile *Geantfile;
   TH1D* hist_wiggle;
 
   G4double fTimeStep;
+  G4bool   fSaveStep;
 
   int eventNum;
   float primEnergy[4];//0=>mu+, 1=>e+, 2=>e-, 3=>gamma
