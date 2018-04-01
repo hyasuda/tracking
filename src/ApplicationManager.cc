@@ -17,7 +17,6 @@ ApplicationManager::ApplicationManager()
   : theEdepByEvent(), theEdepByRun(), theHitPosition(), 
     theFileStream(), 
     theApplication(0)
-    //theEdepHist(0), theHitHist(0)
 {
   if ( theApplicationManager ) {
     G4cout <<  "ApplicationManager constructed twice." << G4endl;
@@ -26,7 +25,10 @@ ApplicationManager::ApplicationManager()
   theApplicationManager = this;
 
   theApplication = new TApplication("Geant4 User Application", 0, 0);
- 
+
+  //thePrevTime = 0.;
+  thePrevTime = -1e9*second;
+
   gErrorIgnoreLevel = 3000;
 
   ntupleBody= new TTree ("ntupleBody","Tree for MCSteps and SimHits");
@@ -62,6 +64,23 @@ ApplicationManager::ApplicationManager()
   ntupleDecay->Branch("DPDG",&DPDG);
   ntupleDecay->Branch("DtrackID",&DtrackID);
   ntupleDecay->Branch("DparentID",&DparentID);
+
+  ntupleTransport = new TTree("ntupleTransport", "GEANT4 TransportTree");
+  ntupleTransport->Branch("eventNum", &fEventNum, "TeventNum/I");
+  ntupleTransport->Branch("Tpos_x", &fTpos_x);
+  ntupleTransport->Branch("Tpos_y", &fTpos_y);
+  ntupleTransport->Branch("Tpos_z", &fTpos_z);
+  ntupleTransport->Branch("Tmom_x", &fTmom_x);
+  ntupleTransport->Branch("Tmom_y", &fTmom_y);
+  ntupleTransport->Branch("Tmom_z", &fTmom_z);
+  ntupleTransport->Branch("Ttime", &fTtime);
+  ntupleTransport->Branch("TtEnergy", &fTtEnergy);
+  ntupleTransport->Branch("Tpol_x", &fTpol_x);
+  ntupleTransport->Branch("Tpol_y", &fTpol_y);
+  ntupleTransport->Branch("Tpol_z", &fTpol_z);
+  ntupleTransport->Branch("Tmag_x", &fTmag_x);
+  ntupleTransport->Branch("Tmag_y", &fTmag_y);
+  ntupleTransport->Branch("Tmag_z", &fTmag_z);
 }
 
 ApplicationManager::~ApplicationManager()

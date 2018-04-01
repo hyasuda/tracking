@@ -8,6 +8,14 @@
 #/mu/mag/fieldFile FLDATA/20160422_Abe2017May-77_n15.txt
 #/mu/mag/fieldFile FLDATA/3CBs-Narrow-region-n3E-4-Abe20171120_n15.txt
 #
+# set kicker magnetic field calculation type
+/mu/mag/kickerCalType off
+#/mu/mag/kickerCalType interpolation
+#/mu/mag/kickerCalType strict
+#
+# set kicker magnetic field file: kickerCalType should be set first!
+#/mu/mag/kickerFieldFile FLDATA/round_kicker_w_wall_401_DC.table
+#
 # set magnetic field spin tracking
 #/mu/mag/withSpin true
 /mu/mag/withSpin false
@@ -20,9 +28,21 @@
 #/mu/gun/rndm off
 #/mu/gun/rndm repeat
 #
-# set beam sample file
+/mu/gun/beamType storage
+#/mu/gun/beamType injection
+#
+# set beam sample file; beamType should be set first!
 /mu/gun/beamSample beamSample/sample_1200_good.txt
 #/mu/gun/beamSample beamSample/sample4_5420.txt
+# 
+# beam sample to be used with /mu/gun/beamType injection
+#/mu/gun/beamSample beamSample/t_test0_x5_y148_785_typcirmod_tCut14882.txt
+#
+# set beam polarization magnitude
+/mu/gun/beamPol 0.5
+#
+# set beam spin rotation method
+/mu/gun/beamSpinRot off
 #
 # set output file name
 #/mu/run/fileName data/mug2edm_0.root

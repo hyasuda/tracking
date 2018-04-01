@@ -23,6 +23,8 @@ public:
     G4UIdirectory*             fMagDir;
     G4UIcmdWithAString*        fCalTypeCmd;
     G4UIcmdWithAString*        fFieldFileCmd;
+    G4UIcmdWithAString*        fKickerCalTypeCmd;
+    G4UIcmdWithAString*        fKickerFieldFileCmd;
     G4UIcmdWithABool*          fWithSpinCmd;
 };
 

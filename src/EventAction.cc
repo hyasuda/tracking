@@ -120,6 +120,7 @@ void EventAction::EndOfEventAction(const G4Event* evt)
   int eventNum=-1;//application->GetEventNum();
   application->FillDecayNtuple();
   application->FillNtuple();
+  application->FillTransportNtuple();
   printf("EndOfEventAction eventNum=%d hitInfo=%d dep=%lf\n",eventNum,hitInfo,edep/MeV);
   application->SetBeamIndex(-1);
 

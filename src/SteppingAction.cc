@@ -24,7 +24,7 @@
 
 SteppingAction::SteppingAction(DetectorConstruction* det,
 			       EventAction* evt)
-:detector(det), eventaction(evt)					 
+  :detector(det), eventaction(evt), fTimeStep(1.*ns) 
 {}
 
 
@@ -41,13 +41,29 @@ void SteppingAction::UserSteppingAction(const G4Step* aStep)
   //procname DecayWithSpin, StepLimiter,Transportation,SynRad
   G4String procName = aStep->GetPostStepPoint()->GetProcessDefinedStep()->GetProcessName();
 
-
   G4Track* track= aStep->GetTrack();
   G4double gtime_all= track->GetGlobalTime();//nsec
+
+  //G4cout << "time = " << gtime_all << " procName = " << procName << G4endl;
 
   if(gtime_all>40000){
     G4cout << "--------------------------g_time :" << gtime_all  << G4endl;
     track->SetTrackStatus(fStopAndKill);
+  }
+
+  if(gtime_all-application->GetPrevTime()>=fTimeStep){
+    //G4cout << "gtime = " << gtime_all << " muon r = " << track->GetPosition().perp() << " z = " << track->GetPosition().z() << " pz' = " << track->GetMomentum().z()/track->GetMomentum().mag() << G4endl;
+    if( gtime_all-application->GetPrevTime()>=2*fTimeStep && application->GetPrevTime()>0. ) G4cout << "there is missed step" << G4endl;
+    application->SetPrevTime((G4int)(gtime_all/fTimeStep)*fTimeStep);
+
+    if(track->GetDefinition()->GetParticleName()=="mu+"){
+      MagneticField *mymagField = MagneticField::getObject();
+      G4double point[4] = {track->GetPosition().x(),track->GetPosition().y(),track->GetPosition().z(),gtime_all};
+      G4double Bfield[6];
+      mymagField->GetFieldValue(point, Bfield);
+      G4ThreeVector Bmag(Bfield[0],Bfield[1],Bfield[2]);
+      application->PutTransportValue(application->GetEventNum(), track->GetTotalEnergy(), track->GetMomentum(), gtime_all, track->GetPosition(), track->GetPolarization(), Bmag);
+    }
   }
 
   if(track->GetDefinition()->GetParticleName()=="e+"){

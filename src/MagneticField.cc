@@ -19,11 +19,22 @@
 MagneticField* MagneticField::object = 0;
 
 MagneticField::MagneticField()
-  : G4MagneticField(),pStepper(0),fEquation(0),fEquationSpin(0),fCalType("uniform"),fFieldFileName(""),fWithSpin(false)
+  : G4MagneticField(),pStepper(0),fEquation(0),fEquationSpin(0),fCalType("uniform"),fFieldFileName(""),fKickerCalType("off"),fKickerFieldFileName(""),fWithSpin(false),
+    // weak B-field constants
+    fXMU(4.E-7),
+    fFLRMin(1.), // m
+    fFLZMin(1.), // m
+    // kicker constants
+    fFacB(2.596),
+    fStart_kick(0*ns),
+    fEndKickPar(0.5),
+    fTK(288.5*ns),
+    fTau0(1.e20*ns),
+    fTau(1.e29*ns)
 {
   object = this;
   updateField();
-  
+
   fMagFieldMessenger = new MagneticFieldMessenger(this);
 }
 
@@ -42,9 +53,17 @@ void MagneticField::FillFieldValue()
     ifs >> fNF;
     for(G4int i=0;i<fNF;++i){
       ifs >> IDUM >> fFLR[i] >> fFLZ[i] >> fFLCRNT[i];
+      if( fFLR[i]<fFLRMin && abs(fFLZ[i])<fFLZMin ){
+	if( fFLR[i]>abs(fFLZ[i]) ){
+	  fFLRMin = fFLR[i];
+	}else{
+	  fFLZMin = abs(fFLZ[i]);
+	}
+      }
     }
     ifs.close();
-    
+    G4cout << "FLRMin = " << fFLRMin << " FLZMin = " << fFLZMin << G4endl;
+
     fGraph_Bz = new TGraph2D;
     fGraph_Br = new TGraph2D;
     
@@ -66,12 +85,46 @@ void MagneticField::FillFieldValue()
       for(G4int j=0;j<=zbin;++j){
 	RM = roffset+i*rmax/(G4double)rbin;
 	ZM = (2*j-zbin)*zmax/(G4double)zbin;
-	bflfit(fNF,fFLR,fFLZ,fFLCRNT,RM,ZM,BR,BZ,APHI);
+	bflfit(RM,ZM,BR,BZ,APHI);
 	fGraph_Bz->SetPoint(count, RM, ZM, BZ);
 	fGraph_Br->SetPoint(count, RM, ZM, BR);
 	count++;
       }
     }
+  }
+}
+
+void MagneticField::FillKickerFieldValue()
+{
+  if(fKickerCalType=="interpolation" ||
+    fKickerCalType=="strict"){
+    G4cout << "opening kicker field file: " << fKickerFieldFileName << G4endl;
+    std::ifstream ifs(fKickerFieldFileName.c_str());
+    if(!ifs.is_open()){
+      G4cerr << "kicker field file: " << fKickerFieldFileName << " cannot be opend!" << G4endl;
+      return;
+    }
+    char lineread[256];
+    for(G4int i=0; i<8; ++i){
+      ifs.getline(lineread, 256);
+    }
+    fKick_spatial_i = 0;
+    G4double readx,ready,readz,readBx,readBy,readBz;
+    for(G4int i=0; i<200; ++i){
+      ifs >> readx >> ready >> readz >> readBx >> readBy >> readBz;
+      if(ifs.eof()) break;
+      fPosR[i] = readx*cm;
+      fPosY[i] = ready*cm;
+      fBXk[i]  = readBx;
+      fBYk[i]  = readBy;
+      fKick_spatial_i = i;
+    }
+    ifs.close();
+
+    if(fKick_spatial_i>0){
+      fRatio = abs(fFacB)/fBXk[0];
+    }
+    fEnd_kick = fEndKickPar*fTK;
   }
 }
 
@@ -154,6 +207,7 @@ void MagneticField::GetFieldValue( const G4double Point[4],G4double* Bfield ) co
   // Point[0],Point[1],Point[2],Point[3] are x, y, z, t cordinates 
 
   const G4double Er = 0.*volt/m; // set electroic fieled to zero
+  const G4double Ez = 0.*volt/m; 
   //const G4double Er = 2.113987E+6*volt/m;
   // Er=a*Bz*c*beta/(double)((1-beta*beta)-a*beta*beta);//volt/m
   //a=0.0011659208;
@@ -168,7 +222,7 @@ void MagneticField::GetFieldValue( const G4double Point[4],G4double* Bfield ) co
 
   G4double Bx,By;
  
-  G4double posR=sqrt(pow(Point[0],2)+pow(Point[1],2));
+  G4double posR=sqrt(Point[0]*Point[0]+Point[1]*Point[1]);
   G4double cos_theta,sin_theta;
 
   if(fCalType=="interpolation" || fCalType=="interpolationstorage"){
@@ -180,24 +234,29 @@ void MagneticField::GetFieldValue( const G4double Point[4],G4double* Bfield ) co
     Br=0.0;
     Bz=0.0;
 
-    G4double APHI=0.0E0;
-    double DDD,DBR,DBZ,DAPHI;
+    G4double APHI = 0.;
     G4double posRm = posR/m;
     G4double zm = Point[2]/m;
 
-    for(int i=0;i<fNF;++i){
-      DDD=sqrt((fFLR[i]-posR)*(fFLR[i]-posR)+(fFLZ[i]-Point[2])*(fFLZ[i]-Point[2]));
-      DBR = 0.;
-      DBZ = 0.;
-      if(DDD!=0.0E0){
-	bfield(fFLR[i],fFLZ[i],fFLCRNT[i],posRm,zm,DBR,DBZ,DAPHI);  
-      }
-      Br=Br+DBR;
-      Bz=Bz+DBZ;
-      APHI=APHI+DAPHI;
+    bflfit(posRm,zm,Br,Bz,APHI);
+
+    Br*=tesla;
+    Bz*=tesla;
+  }
+
+  if( fKickerCalType!="off" ){
+    if( Point[3]>=fStart_kick && Point[3]<(fStart_kick+fEnd_kick) ){
+      G4double BRkick,BYkick;
+      G4double BRkick0,BYkick0;
+      // Get kick-B-spatial 
+      G4double pos[3] = {Point[0], Point[2], Point[1]};
+      kickSpatial(pos, BRkick0, BYkick0);
+      G4double int_time = Point[3]-fStart_kick; // ns
+      // Get kick-B-field
+      kickMag(int_time, BRkick0, BYkick0, BRkick, BYkick);
+      Br += BRkick;
+      Bz += BYkick;
     }
-    Br = Br*tesla;
-    Bz = Bz*tesla;
   }
 
   if(posR>0){
@@ -219,26 +278,37 @@ void MagneticField::GetFieldValue( const G4double Point[4],G4double* Bfield ) co
   Bfield[2]=Bz;
   Bfield[3]=Ex;
   Bfield[4]=Ey;
-  Bfield[5]=0;
+  Bfield[5]=Ez;
 
   return;
 }
 
 
-void MagneticField::bflfit(int NF,double FLR[500],double FLZ[500],double FLCRNT[500],double RM,double ZM,double &BR,double &BZ,double &APHI)
+void MagneticField::bflfit(double RM,double ZM,double &BR,double &BZ,double &APHI) const
 {
   BR=0.0;
   BZ=0.0;
   APHI=0.0;
-  double DDD,DBR,DBZ,DAPHI;
-  for(int i=0;i<NF;++i){
-    DDD=sqrt(pow(FLR[i]-RM,2)+pow(FLZ[i]-ZM,2));
-    if(DDD!=0.0E0){
-      bfield(FLR[i],FLZ[i],FLCRNT[i],RM,ZM,DBR,DBZ,DAPHI);  
+  G4double DBR=0.,DBZ=0.,DAPHI=0.;
+
+  if( RM<fFLRMin && abs(ZM)<fFLZMin ){
+    for(G4int i=0; i<fNF;++i){
+      bfield(fFLR[i],fFLZ[i],fFLCRNT[i],RM,ZM,DBR,DBZ,DAPHI);
+      BR += DBR;
+      BZ += DBZ;
+      APHI += DAPHI;
     }
-    BR=BR+DBR;
-    BZ=BZ+DBZ;
-    APHI=APHI+DAPHI;
+  }else{
+    G4double DDD;
+    for(G4int i=0;i<fNF;++i){
+      DDD = (fFLR[i]-RM)*(fFLR[i]-RM)+(fFLZ[i]-ZM)*(fFLZ[i]-ZM);
+      if(DDD!=0.){
+	bfield(fFLR[i],fFLZ[i],fFLCRNT[i],RM,ZM,DBR,DBZ,DAPHI);  
+      }
+      BR += DBR;
+      BZ += DBZ;
+      APHI += DAPHI;
+    }
   }
 }
 
@@ -251,25 +321,24 @@ void MagneticField::bfield(double CR,double CZ,double CI,double RI,double ZJ,dou
 //    (RI,ZJ)--- MEASUREMENT POSITION                                  
 //    (BR,BZ)--- MAGNETIC FIELD                                        
 //    (APHI) --- VECTOR POTENTIAL                                      
-  double XMU=4.E-7;                                                        
-  double S =RI*RI+CR*CR+(ZJ-CZ)*(ZJ-CZ);                                  
-  double P =RI*CR+RI*CR;                                                  
-  double RK=(P+P)/(double)(S+P);  
-  double PSI;
-  double ELPK,ELPE,ILL; 
-  cep12d(RK,ELPK,ELPE,ILL);                                  
+  //double XMU=4.E-7;
+  G4double S =RI*RI+CR*CR+(ZJ-CZ)*(ZJ-CZ);                                  
+  G4double P =2*RI*CR;                                                  
+  G4double RK=(P+P)/(double)(S+P);  
+  //G4double PSI;
+  G4double ELPK,ELPE;
+  cep12d(RK,ELPK,ELPE);
   
-  if(ILL==0){                                          
-    RK=sqrt(RK);                                                    
-    BZ =XMU*CI/(double)(2.* sqrt(S+P))*(ELPK-(S-2.*CR*CR)/(double)(S-P)*ELPE);    
-    BR =XMU*CI/(double)(2.* sqrt(S+P))*(ZJ-CZ)/(double)RI*(-ELPK+ S/(double)(S-P)*ELPE);    
-    PSI=CI/(double)RK* sqrt(RI*CR)*((1.E0-RK*RK/(double)2.)*ELPK-ELPE);            
-    APHI=XMU*PSI/(double)RI;                                                  
-  }
+  RK=sqrt(RK);                                                    
+  BZ =fXMU*CI/(2.* sqrt(S+P))*(ELPK-(S-2.*CR*CR)/(S-P)*ELPE);    
+  BR =fXMU*CI/(2.* sqrt(S+P))*(ZJ-CZ)/RI*(-ELPK+ S/(S-P)*ELPE);    
+  //PSI=CI/RK*sqrt(RI*CR)*((1.-0.5*RK*RK)*ELPK-ELPE);            
+  //APHI=fXMU*PSI/RI;
+  APHI=fXMU*CI*sqrt(RI*CR)*((1.-0.5*RK*RK)*ELPK-ELPE)/(RK*RI);
 }         
 //---------------------------------------------------------------------  
-void MagneticField::cep12d(double RK,/*double I,*/double &AK,double &AE,double &ILL) const
-{                                
+void MagneticField::cep12d(double RK,double &AK,double &AE) const
+{
   /*
     DATA  AZ,A1,A2,A3,A4/  1.38629436112D0,0.09666344259D0,      
     A                           0.03590092383D0,0.03742563713D0,      
@@ -306,24 +375,67 @@ void MagneticField::cep12d(double RK,/*double I,*/double &AK,double &AE,double &
   double EB2=0.09200180037E0;
   double EB3=0.04069697526E0;
   double EB4=0.00526449639E0;
-  
-  ILL=0;                                                           
-  double XM1,XM2,XM3,XM4,DALXM,ALXM;
+
+  double XM1,XM2,XM3,XM4,ALXM;
   double BZZ;
-  if(RK<0. || RK>1.){               
-    ILL=1;                                                            
-    AK=0.0;                                                            
-    AE=0.0;                                                            
-  }else{
-    XM1=1.-RK;                                                      
-    XM2=XM1*XM1;                                                      
-    XM3=XM2*XM1;                                                      
-    XM4=XM3*XM1;                                                      
-    DALXM=1./(double)XM1;                                                  
-    ALXM=log(DALXM);                                                
-    BZZ=BZ+B1*XM1+B2*XM2+B3*XM3+B4*XM4;                                
-    AK= AZ+A1*XM1+A2*XM2+A3*XM3+A4*XM4 + BZZ*ALXM;                    
-    BZZ=EBZ+EB1*XM1+EB2*XM2+EB3*XM3+EB4*XM4;                      
-    AE=EAZ+EA1*XM1+EA2*XM2+EA3*XM3+EA4*XM4+BZZ*ALXM;              
-  }
+
+  // RK>0. && RK<1. is satisfied by definition
+  XM1=1.-RK;                                                      
+  XM2=XM1*XM1;                                                      
+  XM3=XM2*XM1;                                                      
+  XM4=XM3*XM1;  
+  ALXM=-log(XM1);                                                
+  BZZ=BZ+B1*XM1+B2*XM2+B3*XM3+B4*XM4;                                
+  AK= AZ+A1*XM1+A2*XM2+A3*XM3+A4*XM4 + BZZ*ALXM;                    
+  BZZ=EBZ+EB1*XM1+EB2*XM2+EB3*XM3+EB4*XM4;                      
+  AE=EAZ+EA1*XM1+EA2*XM2+EA3*XM3+EA4*XM4+BZZ*ALXM;              
 }                                                            
+
+
+void MagneticField::kickSpatial(const G4double x[3], G4double &BRkick0, G4double &BYkick0) const
+{
+  G4int ff=0;
+  G4int ff2;
+  G4double min=1E10;
+  G4double dis;
+  G4double tmpy;
+  for(G4int i=0;i<fKick_spatial_i;++i){
+    tmpy=abs(x[1]);
+    dis=(tmpy-fPosY[i])*(tmpy-fPosY[i]);
+    if(dis<min){
+      //printf("fPosY[%d]=%lf min=%lf\n",ff,fPosY[ff],min);
+      min=dis;
+      ff=i;
+    }
+  }
+  if(ff>0 && ff<(fKick_spatial_i-1)){
+    G4double min2=(tmpy-fPosY[ff+1])*(tmpy-fPosY[ff+1]);
+    G4double min3=(tmpy-fPosY[ff-1])*(tmpy-fPosY[ff-1]);
+    ff2=ff+1;
+    if(min2>=min3)ff2=ff-1;
+  }else if(ff==0){
+    ff2=ff+1;
+  }else if(ff==(fKick_spatial_i-1)){
+    ff2=ff-1;
+  }else{
+    G4cout << "No kicker component is close to particle" << G4endl;
+    BRkick0 = 0.;
+    BYkick0 = 0.;
+    return;
+  }
+  BRkick0=(fBXk[ff]+fBXk[ff2])*0.5*fRatio;
+  BYkick0=(fBYk[ff]+fBYk[ff2])*0.5*fRatio;
+}
+
+
+void MagneticField::kickMag(const G4double t, const G4double BRkick0, const G4double BYkick0, G4double &BRkick, G4double &BYkick) const
+{
+  G4double BRkickTemp=BRkick0*fFacB*gauss;
+  G4double BYkickTemp=BYkick0*0*gauss;
+  G4double theta=(t/fTK)*CLHEP::twopi;
+
+  if(t<fTau0) BRkick = BRkickTemp*sin(theta)*exp(-t/fTau);
+  else BRkick = BRkickTemp*sin(theta)*exp(-(t-fTau0)/fTau);
+
+  BYkick=BYkickTemp*sin(theta);
+}

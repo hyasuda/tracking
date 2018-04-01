@@ -39,7 +39,6 @@
 
 class ApplicationManager
 {
-  
 private:
   static ApplicationManager* theApplicationManager;
   
@@ -52,6 +51,7 @@ private:
   G4double theHitKEnergy;
   G4double theHitGtime;
   G4double theHitPtime;
+  G4double thePrevTime;
   G4int theParID;
   G4int theHitBodyTyp;
   G4int theHitInfo;
@@ -65,6 +65,7 @@ private:
   TApplication* theApplication;
   TTree* ntupleBody;
   TTree* ntupleDecay;
+  TTree* ntupleTransport;
   
   int   fEventNum;
   int   fHitInfo;
@@ -99,34 +100,30 @@ private:
   std::vector<int> DPDG;
   std::vector<int> DtrackID;
   std::vector<int> DparentID;
-  /*
-    float DkEnergy[4];
-    float Dpol_x;
-    float Dpol_y;
-    float Dpol_z;
-    float Dmomv_x[4];
-    float Dmomv_y[4];
-    float Dmomv_z[4];
-    float Dmom_x[4];
-    float Dmom_y[4];
-    float Dmom_z[4];
-    float Dptime;
-    float Dgtime;
-    float Dpos_x;
-    float Dpos_y;
-    float Dpos_z;
-    float DtEnergy[4];
-    int   DPDG[4];
-  */
 
-  public:
-    ApplicationManager();
-    ~ApplicationManager();
+  std::vector<double> fTpos_x;
+  std::vector<double> fTpos_y;
+  std::vector<double> fTpos_z;
+  std::vector<double> fTtEnergy;
+  std::vector<double> fTmom_x;
+  std::vector<double> fTmom_y;
+  std::vector<double> fTmom_z;
+  std::vector<double> fTtime;
+  std::vector<double> fTpol_x;
+  std::vector<double> fTpol_y;
+  std::vector<double> fTpol_z;
+  std::vector<double> fTmag_x;
+  std::vector<double> fTmag_y;
+  std::vector<double> fTmag_z;
 
-  public:
-    static ApplicationManager* GetApplicationManager();
+public:
+  ApplicationManager();
+  ~ApplicationManager();
 
-  public:
+public:
+  static ApplicationManager* GetApplicationManager();
+  
+public:
     G4double GetEdepByEvent() const;
     G4double GetEdepByRun() const;
     const G4ThreeVector& GetHitPosition() const;
@@ -135,6 +132,7 @@ private:
     G4double GetHitTEnergy() const;
     G4double GetHitGtime() const;
     G4double GetHitPtime() const;
+    G4double GetPrevTime() const;
     G4int GetEventNum() const;
     G4int GetHitInfo() const;
     G4int GetHitBody() const;
@@ -148,6 +146,7 @@ private:
     void SetHitMomentum(const G4ThreeVector& mom);
     void SetHitTEnergy(G4double Tenergy);
     void SetHitKEnergy(G4double Kenergy);
+    void SetPrevTime(G4double time);
     void SetEventNum(G4int eventNum);
     void SetHitInfo(G4int hitInfo);
     void SetHitGtime(G4double Gtime);
@@ -173,6 +172,8 @@ private:
     void PutNtupleValue(G4int pID, G4double tE, G4ThreeVector pos, G4ThreeVector mom, G4double Gtime, G4int bodyTyp, G4int bodyStatus, G4int hitInfo, G4double EachDepE, G4int isPrimary, G4int trackID);
   void PutDecayValue(G4double DTEnergy, G4ThreeVector Dpos, G4ThreeVector Dmom, G4ThreeVector Dpol,G4double DGtime, G4int PDG, G4int trackID, G4int parentID);
      void ClearNtuple(); 
+    void FillTransportNtuple(); 
+    void PutTransportValue(G4int evtNum, G4double TtEnergy, G4ThreeVector Tmom, G4double Ttime, G4ThreeVector Tpos, G4ThreeVector Tpol, G4ThreeVector Tmag);
 
 };
 
@@ -237,6 +238,11 @@ inline G4double ApplicationManager::GetHitGtime() const
 inline G4double ApplicationManager::GetHitPtime() const
 {
   return theHitPtime;
+}
+
+inline G4double ApplicationManager::GetPrevTime() const
+{
+  return thePrevTime;
 }
 
 inline G4int ApplicationManager::GetHitBody() const
@@ -312,6 +318,12 @@ inline void ApplicationManager::SetHitPtime(G4double Ptime)
   return;
 }
 
+inline void ApplicationManager::SetPrevTime(G4double time)
+{
+  thePrevTime = time;
+  return;
+}
+
 inline void ApplicationManager::SetHitBody(G4int Body)
 {
   theHitBodyTyp = Body;
@@ -344,17 +356,7 @@ inline TApplication* ApplicationManager::GetApplication() const
 {
   return theApplication;
 }
-/*
-inline TH1D* ApplicationManager::GetEdepHist() const
-{
-  return theEdepHist;
-}
 
-inline TH2D* ApplicationManager::GetHitHist() const
-{
-  return theHitHist;
-}
-*/
 inline TTree* ApplicationManager::GetNtupleBody() const
 {
   return ntupleBody;
@@ -402,6 +404,7 @@ inline void ApplicationManager::Save()
   printf("writen ROOT File\n"); 
   ntupleBody->Write();
   ntupleDecay->Write();
+  ntupleTransport->Write();
   file->Close();
   delete file;
   return;
@@ -425,7 +428,6 @@ inline void ApplicationManager::ClearNtuple()
   DparentID.clear();
 
   EachDepE.clear();
-  //CurrentDepE.clear();
   fPID.clear();
   bodyTyp.clear();
   bodyStatus.clear();
@@ -440,8 +442,25 @@ inline void ApplicationManager::ClearNtuple()
   fIsPrimary.clear();
   fTrackID.clear();
 
+  fTmom_x.clear();
+  fTmom_y.clear();
+  fTmom_z.clear();
+  fTtEnergy.clear();
+  fTpos_x.clear();
+  fTpos_y.clear();
+  fTpos_z.clear();
+  fTtime.clear();
+  fTpol_x.clear();
+  fTpol_y.clear();
+  fTpol_z.clear();
+  fTmag_x.clear();
+  fTmag_y.clear();
+  fTmag_z.clear();
+
   fHitInfo=0;
   theHitInfo=0;
+  //thePrevTime=0.;
+  thePrevTime=-1e9*second;
 
   return;
 }
@@ -487,6 +506,26 @@ inline void ApplicationManager::PutNtupleValue(G4int parID, G4double TEnergy, G4
 
 }
 
+inline void ApplicationManager::PutTransportValue(G4int eventNum, G4double TtEnergy, G4ThreeVector Tmom, G4double Ttime, G4ThreeVector Tpos, G4ThreeVector Tpol, G4ThreeVector Tmag)
+{
+  fEventNum = eventNum;
+  fTtEnergy.push_back(TtEnergy/MeV);
+  fTmom_x.push_back(Tmom.x());
+  fTmom_y.push_back(Tmom.y());
+  fTmom_z.push_back(Tmom.z());
+  fTtime.push_back(Ttime);
+  fTpos_x.push_back(Tpos.x());
+  fTpos_y.push_back(Tpos.y());
+  fTpos_z.push_back(Tpos.z());
+  fTpol_x.push_back(Tpol.x());
+  fTpol_y.push_back(Tpol.y());
+  fTpol_z.push_back(Tpol.z());
+  fTmag_x.push_back(Tmag.x());
+  fTmag_y.push_back(Tmag.y());
+  fTmag_z.push_back(Tmag.z());
+  return;
+}
+
 inline void ApplicationManager::FillNtuple()
 {
   ntupleBody->Fill();
@@ -498,4 +537,11 @@ inline void ApplicationManager::FillDecayNtuple()
   ntupleDecay->Fill();
   return;
 }
+
+inline void ApplicationManager::FillTransportNtuple()
+{
+  ntupleTransport->Fill();
+  return;
+}
+
 #endif
