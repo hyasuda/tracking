@@ -50,14 +50,14 @@ void EventAction::BeginOfEventAction(const G4Event* evt)
  EnergyAbs = EnergyGap = 0.;
  TrackLAbs = TrackLGap = 0.;
 
-//DataBroker 
+ //DataBroker 
  ApplicationManager* application = 
- ApplicationManager::GetApplicationManager();
+   ApplicationManager::GetApplicationManager();
 
- application->SetEdepByEvent(0.0);
+ //application->SetEdepByEvent(0.0);
 
  application->SetEventNum(evtNb);
- application->ClearNtuple(evtNb);
+ application->ClearNtuple();
 
 ///DataBrokerEND///////////////////////
 }
@@ -82,7 +82,6 @@ void EventAction::EndOfEventAction(const G4Event* evt)
   for(G4int idx=0; idx< nhits; idx++) {
     //G4int ich= (*hccal)[idx]-> GetID();
     //G4double edep= (*hccal)[idx]-> GetEdep();
-
   }
 
   //accumulates statistic
@@ -109,29 +108,23 @@ void EventAction::EndOfEventAction(const G4Event* evt)
                                         << G4BestUnit(TrackLGap,"Length")
        << G4endl;
 	  
-  }  
-//DataBroker 
+  }
+
+  //DataBroker 
   ApplicationManager* application = 
-  ApplicationManager::GetApplicationManager();
-
-  G4ThreeVector pos = application->GetHitPosition();
-
-  //G4double hitE = application->GetHitTEnergy();
+    ApplicationManager::GetApplicationManager();
 
   G4double edep = application->GetEdepByEvent();
-
-  const G4String tab = "\t";
 
   int hitInfo=application->GetHitInfo();
   int eventNum=-1;//application->GetEventNum();
   application->FillDecayNtuple();
   application->FillNtuple();
-  application->Fill(edep/MeV);
   printf("EndOfEventAction eventNum=%d hitInfo=%d dep=%lf\n",eventNum,hitInfo,edep/MeV);
   application->SetBeamIndex(-1);
 
   application->Update();
-///DataBrokerEND///////////////////////
+  ///DataBrokerEND///////////////////////
 
 }  
 

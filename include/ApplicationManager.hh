@@ -39,59 +39,67 @@
 
 class ApplicationManager
 {
+  
+private:
+  static ApplicationManager* theApplicationManager;
+  
+private:
+  G4double theEdepByEvent;
+  G4double theEdepByRun;
+  G4ThreeVector theHitPosition;
+  G4ThreeVector theHitMomentum;
+  G4double theHitTEnergy;
+  G4double theHitKEnergy;
+  G4double theHitGtime;
+  G4double theHitPtime;
+  G4int theParID;
+  G4int theHitBodyTyp;
+  G4int theHitInfo;
+  G4int theEventNum;
+  G4int thePositronID;
+  G4int theBeamIndex;
+  std::ofstream theFileStream;
+  
+private:
+  TFile* file;
+  TApplication* theApplication;
+  TTree* ntupleBody;
+  TTree* ntupleDecay;
+  
+  int   fEventNum;
+  int   fHitInfo;
+  
+  std::vector<int> fPID;
+  std::vector<int> bodyTyp;
+  std::vector<int> bodyStatus;
+  std::vector<double> EachDepE;
+  std::vector<double> mom_x;
+  std::vector<double> mom_y;
+  std::vector<double> mom_z;
+  std::vector<double> gtime;
+  std::vector<double> pos_x;
+  std::vector<double> pos_y;
+  std::vector<double> pos_z;
+  std::vector<double> tEnergy;
+  std::vector<int> fIsPrimary;
+  std::vector<int> fTrackID;
 
-  private:
-    static ApplicationManager* theApplicationManager;
-
-  private:
-    G4double theEdepByEvent;
-    G4double theEdepByRun;
-    G4ThreeVector theHitPosition;
-    G4ThreeVector theHitMomentum;
-    G4double theHitTEnergy;
-    G4double theHitKEnergy;
-    G4double theHitGtime;
-    G4double theHitPtime;
-    G4int theParID;
-    G4int theHitBodyTyp;
-    G4int theHitInfo;
-    G4int theEventNum;
-    G4int thePositronID;
-    G4int theBeamIndex;
-    std::ofstream theFileStream;
-
-  private:
-    TFile* file;
-    TApplication* theApplication;
-    TH1D* theEdepHist;
-    TH2D* theHitHist;
-    TTree* ntupleBody;
-    TTree* ntupleDecay;
-
-    int   fEventNum;
-    int   fHitInfo;
-
-    std::vector<int> fPID;
-    std::vector<int> bodyTyp;
-    std::vector<int> bodyStatus;
-    std::vector<int> chID;//not yet hiromi 2010/05/25
-    std::vector<double> EachDepE;
-    std::vector<double> CurrentDepE;
-    std::vector<double> kEnergy;
-    std::vector<double> mom_x;
-    std::vector<double> mom_y;
-    std::vector<double> mom_z;
-    std::vector<double> ptime;
-    std::vector<double> gtime;
-    std::vector<double> pos_x;
-    std::vector<double> pos_y;
-    std::vector<double> pos_z;
-    std::vector<double> tEnergy;
-    std::vector<int> fIsPrimary;
-    std::vector<int> fTrackID;
-  //std::vector<double> fStepLength;
-  //std::vector<double> fStepLengthTotal;
-
+  std::vector<double> DkEnergy;
+  std::vector<double> Dpol_x;
+  std::vector<double> Dpol_y;
+  std::vector<double> Dpol_z;
+  std::vector<double> Dmom_x;
+  std::vector<double> Dmom_y;
+  std::vector<double> Dmom_z;
+  std::vector<double> DtEnergy;
+  std::vector<double> Dgtime;
+  std::vector<double> Dpos_x;
+  std::vector<double> Dpos_y;
+  std::vector<double> Dpos_z;
+  std::vector<int> DPDG;
+  std::vector<int> DtrackID;
+  std::vector<int> DparentID;
+  /*
     float DkEnergy[4];
     float Dpol_x;
     float Dpol_y;
@@ -108,8 +116,8 @@ class ApplicationManager
     float Dpos_y;
     float Dpos_z;
     float DtEnergy[4];
-  //    float TotDep;
     int   DPDG[4];
+  */
 
   public:
     ApplicationManager();
@@ -153,8 +161,6 @@ class ApplicationManager
     void AddEdepByRun(G4double edep);
 
     TApplication* GetApplication() const;
-    TH1D* GetEdepHist() const;
-    TH2D* GetHitHist() const;
     TTree* GetNtupleBody() const;
     void Clear();
     void Update();
@@ -164,11 +170,9 @@ class ApplicationManager
     void Fill(G4double x, G4double y, G4double edep);
     void FillNtuple(); 
     void FillDecayNtuple(); 
-    void PutNtupleValue(G4int pID,G4double kE, G4double tE, G4ThreeVector pos, G4ThreeVector mom, 
-			G4double Gtime, G4double Ptime, G4int bodyTyp, G4int bodyStatus, G4int chID, G4int evtNum, G4int hitInfo, G4double CurrentDepE, G4double EachDepE, G4int isPrimary, G4int trackID/*, G4double stepLength, G4double stepLengthTotal*/);
-    void PutDecayValue(G4int evtNum,G4double DKEnergy, G4double DTEnergy, G4ThreeVector Dpos, G4ThreeVector Dmom, 
-              G4ThreeVector Dmomv, G4ThreeVector Dpol,G4double DGtime, G4double DPtime, G4int passID);
-    void ClearNtuple(G4int eventNum); 
+    void PutNtupleValue(G4int pID, G4double tE, G4ThreeVector pos, G4ThreeVector mom, G4double Gtime, G4int bodyTyp, G4int bodyStatus, G4int hitInfo, G4double EachDepE, G4int isPrimary, G4int trackID);
+  void PutDecayValue(G4double DTEnergy, G4ThreeVector Dpos, G4ThreeVector Dmom, G4ThreeVector Dpol,G4double DGtime, G4int PDG, G4int trackID, G4int parentID);
+     void ClearNtuple(); 
 
 };
 
@@ -340,7 +344,7 @@ inline TApplication* ApplicationManager::GetApplication() const
 {
   return theApplication;
 }
-
+/*
 inline TH1D* ApplicationManager::GetEdepHist() const
 {
   return theEdepHist;
@@ -350,7 +354,7 @@ inline TH2D* ApplicationManager::GetHitHist() const
 {
   return theHitHist;
 }
-
+*/
 inline TTree* ApplicationManager::GetNtupleBody() const
 {
   return ntupleBody;
@@ -364,8 +368,6 @@ inline void ApplicationManager::Update()
 
 inline void ApplicationManager::Clear()
 {
-  theEdepHist->Reset();
-  theHitHist->Reset();
   gSystem->ProcessEvents();
   return;
 }
@@ -398,8 +400,6 @@ inline void ApplicationManager::Save()
 {
   file->cd();
   printf("writen ROOT File\n"); 
-  //theEdepHist->Write();
-  //theHitHist->Write();
   ntupleBody->Write();
   ntupleDecay->Write();
   file->Close();
@@ -407,56 +407,38 @@ inline void ApplicationManager::Save()
   return;
 }
 
-
-inline void ApplicationManager::Fill(G4double edep)
+inline void ApplicationManager::ClearNtuple() 
 {
-  theEdepHist->Fill(edep);
-  return;
-}
+  Dpol_x.clear();
+  Dpol_y.clear();
+  Dpol_z.clear();
+  Dmom_x.clear();
+  Dmom_y.clear();
+  Dmom_z.clear();
+  DtEnergy.clear();
+  Dpos_x.clear();
+  Dpos_y.clear();
+  Dpos_z.clear();
+  Dgtime.clear();
+  DPDG.clear();
+  DtrackID.clear();
+  DparentID.clear();
 
-inline void ApplicationManager::Fill(G4double x, G4double y, G4double edep)
-{
-  theHitHist->Fill(x, y, edep);
-  return;
-}
-
-inline void ApplicationManager::ClearNtuple(G4int evtNum) 
-{
-
-  fEventNum= evtNum;
-
-  for(int i=0;i<4;++i){
-    DkEnergy[i] = 0;
-    Dmomv_x[i] = 0;
-    Dmomv_y[i] = 0;
-    Dmomv_z[i] = 0;
-    Dmom_x[i] = 0;
-    Dmom_y[i] = 0;
-    Dmom_z[i] = 0;
-    DtEnergy[i]= 0;
-    DPDG[i] = 0;
-  }
-
-  //kEnergy.clear();
   EachDepE.clear();
-  CurrentDepE.clear();
+  //CurrentDepE.clear();
   fPID.clear();
   bodyTyp.clear();
   bodyStatus.clear();
-  //chID.clear();
   mom_x.clear();
   mom_y.clear();
   mom_z.clear();
-  //ptime.clear();//nsec
-  gtime.clear();//nsec
+  gtime.clear();
   pos_x.clear();
   pos_y.clear();
   pos_z.clear();
   tEnergy.clear();
   fIsPrimary.clear();
   fTrackID.clear();
-  //fStepLength.clear();
-  //fStepLengthTotal.clear();
 
   fHitInfo=0;
   theHitInfo=0;
@@ -465,58 +447,34 @@ inline void ApplicationManager::ClearNtuple(G4int evtNum)
 }
 
 
-inline void ApplicationManager::PutDecayValue(G4int evtNum,G4double DKEnergy, G4double DTEnergy, 
-G4ThreeVector Dpos, G4ThreeVector Dmom, G4ThreeVector Dmomv, G4ThreeVector Dpol,G4double DGtime, G4double DPtime, G4int passID)
+inline void ApplicationManager::PutDecayValue(G4double DTEnergy, G4ThreeVector Dpos, G4ThreeVector Dmom, G4ThreeVector Dpol,G4double DGtime, G4int PDG, G4int trackID, G4int parentID)
 {
-  if(passID<0 || passID>3) return;
-
-  if(passID==0){//mu+
-    fEventNum= evtNum;
-    Dpol_x = Dpol.x();
-    Dpol_y = Dpol.y();
-    Dpol_z = Dpol.z();
-    Dptime = DPtime;//nsec
-    Dgtime = DGtime;//nsec
-    Dpos_x = Dpos.x();
-    Dpos_y = Dpos.y();
-    Dpos_z = Dpos.z();
-  }
-  DtEnergy[passID]= DTEnergy/MeV;
-  DkEnergy[passID]= DKEnergy/MeV;
-  Dmom_x[passID] = Dmom.x();
-  Dmom_y[passID] = Dmom.y();
-  Dmom_z[passID] = Dmom.z();
-  Dmomv_x[passID] = Dmomv.x();
-  Dmomv_y[passID] = Dmomv.y();
-  Dmomv_z[passID] = Dmomv.z();
-  int PDG = 0;
-  if(passID==0) PDG = -13;
-  else if(passID==1) PDG = -11;
-  else if(passID==2) PDG = 12;
-  else if(passID==3) PDG = -14;
-  DPDG[passID] = PDG;
-
-  return;
-
+  DtEnergy.push_back(DTEnergy);
+  Dpos_x.push_back(Dpos.x());
+  Dpos_y.push_back(Dpos.y());
+  Dpos_z.push_back(Dpos.z());
+  Dmom_x.push_back(Dmom.x());
+  Dmom_y.push_back(Dmom.y());
+  Dmom_z.push_back(Dmom.z());
+  Dpol_x.push_back(Dpol.x());
+  Dpol_y.push_back(Dpol.y());
+  Dpol_z.push_back(Dpol.z());
+  Dgtime.push_back(DGtime);
+  DPDG.push_back(PDG);
+  DtrackID.push_back(trackID);
+  DparentID.push_back(parentID);
 }
-inline void ApplicationManager::PutNtupleValue(G4int parID, G4double KEnergy, G4double TEnergy, 
-					       G4ThreeVector pos, G4ThreeVector mom, G4double Gtime, G4double Ptime, G4int bodyType, G4int bodyStat, G4int chNum, G4int evtNum, G4int hitInformation,G4double DepEByEve,G4double eachDepE,G4int isPrimary, G4int trackID)
+inline void ApplicationManager::PutNtupleValue(G4int parID, G4double TEnergy, G4ThreeVector pos, G4ThreeVector mom, G4double Gtime, G4int bodyType, G4int bodyStat, G4int hitInformation,G4double eachDepE,G4int isPrimary, G4int trackID)
 {
- 
   fHitInfo=hitInformation;
-  fEventNum= evtNum;
 
-  CurrentDepE.push_back(DepEByEve/MeV);
   EachDepE.push_back(eachDepE/MeV);
-  kEnergy.push_back(KEnergy/MeV);
   bodyTyp.push_back(bodyType);
   bodyStatus.push_back(bodyStat);
-  chID.push_back(chNum);
   fPID.push_back(parID);
   mom_x.push_back(mom.x());
   mom_y.push_back(mom.y());
   mom_z.push_back(mom.z());
-  ptime.push_back(Ptime);//nsec
   gtime.push_back(Gtime);//nsec
   pos_x.push_back(pos.x());
   pos_y.push_back(pos.y());

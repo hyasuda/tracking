@@ -24,7 +24,6 @@
 
 int bodyTyp;
 int bodyStatus;
-int chID;
 
 BodySD::BodySD()
   : G4VSensitiveDetector("body")
@@ -91,16 +90,9 @@ G4bool BodySD::ProcessHits(G4Step* aStep, G4TouchableHistory*/* ROhist*/)
 
   G4double ptime,gtime,tE,kE;
   G4ThreeVector mom,pos;
-  G4int eventNum=application->GetEventNum();
   G4int  hitInfo=application->GetHitInfo();
   G4String procName = aStep->GetPostStepPoint()->GetProcessDefinedStep()->GetProcessName();
 
-  /*
-  pos = track->GetPosition();
-  G4double ktmpx = pos.x();
-  G4double ktmpy = pos.y();
-  G4double ktmpz = pos.z();
-  */
   G4int pID=0;
 
   bodyTyp = 201;
@@ -123,7 +115,6 @@ G4bool BodySD::ProcessHits(G4Step* aStep, G4TouchableHistory*/* ROhist*/)
     G4int id= bodyTyp;
     if(id<0)id=0;
     if(id>=2000)id=1999;
-    //edepbuf[id]+= aStep-> GetTotalEnergyDeposit();
     edepbuf[id]+= pos.x()/mm;
     
     application->SetHitPosition(pos);
@@ -136,11 +127,8 @@ G4bool BodySD::ProcessHits(G4Step* aStep, G4TouchableHistory*/* ROhist*/)
     application->AddEdepByEvent(totaledep);
     application->AddEdepByRun(totaledep);
     
-    application->Fill(pos.x()/mm, pos.y()/mm, totaledep/MeV);
-
     G4int isPrimary = 0;
     G4int trackID = track->GetTrackID();
-    //G4double CurrentDepE = application->GetEdepByEvent();
 
     if(particlename=="e-") pID=11;
     else if(particlename=="e+"){
@@ -168,7 +156,7 @@ G4bool BodySD::ProcessHits(G4Step* aStep, G4TouchableHistory*/* ROhist*/)
     }   
     
     if(bodyStatus > 0 && unsummedDepE>0.){
-      application->PutNtupleValue(pID,kE/MeV, tE/MeV, pos/mm, mom, gtime, ptime, bodyTyp, bodyStatus, chID, eventNum, hitInfo, currentTotalDepE/MeV,unsummedDepE/MeV,isPrimary,trackID);
+      application->PutNtupleValue(pID,tE/MeV, pos/mm, mom, gtime, bodyTyp, bodyStatus, hitInfo, unsummedDepE/MeV,isPrimary,trackID);
       unsummedDepE = 0.;
     }
   }
@@ -202,4 +190,3 @@ void BodySD::PrintAll()
 {
   hitsCollection-> PrintAllHits();
 }
-
