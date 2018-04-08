@@ -6,6 +6,7 @@
 
 class SteppingAction;
 class G4UIdirectory;
+class G4UIcmdWithADoubleAndUnit;
 class G4UIcmdWithABool;
 
 class SteppingActionMessenger: public G4UImessenger
@@ -19,6 +20,7 @@ public:
 private:
   SteppingAction   *fStepAction;
   G4UIdirectory    *fStepDir;
+  G4UIcmdWithADoubleAndUnit* fTimeStepCmd; 
   G4UIcmdWithABool *fSaveStepCmd;
 };
 

@@ -22,20 +22,18 @@
 #include "TFile.h" 
 #include "TTree.h" 
 
-int bodyTyp;
-int bodyStatus;
-
 BodySD::BodySD()
   : G4VSensitiveDetector("body")
 { collectionName.insert("calorimeter");}
 
 BodySD::~BodySD()
-{;}
+{}
 
 /////////////////////////////////////////////////////
-void BodySD::Initialize(G4HCofThisEvent* HCTE)
+void BodySD::Initialize(G4HCofThisEvent* /*HCTE*/)
 /////////////////////////////////////////////////////
 {
+  /*
   // create hit collection(s)
   hitsCollection= new CalHitsCollection(SensitiveDetectorName,
                                         collectionName[0]); 
@@ -43,9 +41,10 @@ void BodySD::Initialize(G4HCofThisEvent* HCTE)
   // push H.C. to "Hit Collection of This Event"
   G4int hcid= GetCollectionID(0);
   HCTE-> AddHitsCollection(hcid, hitsCollection);
+  */
 
   // clear energy deposit buffer
-  for (G4int i=0; i<NCHANNEL; i++) edepbuf[i]=0.;
+  //for (G4int i=0; i<NCHANNEL; i++) edepbuf[i]=0.;
 
   currentTrackID = 0;
   currentTotalDepE = 0.;
@@ -62,22 +61,18 @@ G4bool BodySD::ProcessHits(G4Step* aStep, G4TouchableHistory*/* ROhist*/)
   const G4StepPoint* postStepPoint = aStep->GetPostStepPoint();
   const G4StepStatus pointIn = preStepPoint->GetStepStatus();
   const G4StepStatus pointOut = postStepPoint->GetStepStatus();
-//See details manual page 275 FAQ.4. Tracks and steps
+  //See details manual page 275 FAQ.4. Tracks and steps
 
-//////***
+  //////***
   // get step information from "PreStepPoint"
   //G4TouchableHistory* touchable= (G4TouchableHistory*)(preStepPoint-> GetTouchable());
 
   G4TouchableHandle theTouchable = preStepPoint->GetTouchableHandle();
 
-//////***
+  //////***
 
   G4ParticleDefinition* pd = aStep->GetTrack()->GetDefinition();
-  //G4int copyNo = theTouchable->GetReplicaNumber();
-  //G4int motherCopyNo = theTouchable->GetReplicaNumber(1);
   G4Track* track = aStep->GetTrack();
-  //G4int stepid = track->GetCurrentStepNumber();
-  G4String particlename = pd->GetParticleName();
   G4ThreeVector deltaposition = aStep->GetDeltaPosition();
   G4double steplength = aStep->GetStepLength();
   G4double totaledep = aStep->GetTotalEnergyDeposit();
@@ -86,62 +81,60 @@ G4bool BodySD::ProcessHits(G4Step* aStep, G4TouchableHistory*/* ROhist*/)
   G4LogicalVolume* logicalvolume = physicalvolume->GetLogicalVolume();
   G4Material* material = logicalvolume->GetMaterial();
   G4String materialname = material->GetName();
-  //G4double density = material->GetDensity();
 
   G4double gtime,tE;
-  G4ThreeVector mom,pos;
+  G4ThreeVector mom;
   G4String procName = aStep->GetPostStepPoint()->GetProcessDefinedStep()->GetProcessName();
 
-  G4int pID=0;
-
-  bodyTyp = 201;
-  
-  bodyStatus=0;
+  int bodyType = 0;
+  int bodyStatus = 0;
 
   if(volumename=="sensor"){
-    if( pointIn==fGeomBoundary || pointIn==fAlongStepDoItProc || pointIn==fUndefined ) bodyStatus += 0x01;
-    if( pointOut==fGeomBoundary || pointOut==fAlongStepDoItProc ) bodyStatus += 0x02;
-
+    bodyType = 1;
     mom = track->GetMomentum();
-    pos = track->GetPosition();
-    gtime = track->GetGlobalTime();//nsec
-    tE= track->GetTotalEnergy();
+    gtime = track->GetGlobalTime();
+    tE = track->GetTotalEnergy();
     
-    G4int id= bodyTyp;
+    G4int id= bodyType;
     if(id<0)id=0;
     if(id>=2000)id=1999;
-    edepbuf[id]+= pos.x()/mm;
+    //edepbuf[id]+= pos.x()/mm;
 
-    G4int isPrimary = 0;
     G4int trackID = track->GetTrackID();
+    if( fHitTrackID.find(trackID)==fHitTrackID.end() ){
+      fHitTrackID.insert(trackID);
+      application->PutDecayValue(tE, preStepPoint->GetPosition(), mom, track->GetPolarization(), gtime, pd->GetPDGEncoding(), trackID, track->GetParentID());
+    }
 
-    if(particlename=="e-") pID=11;
-    else if(particlename=="e+"){
-      pID=-11;
-      if( track->GetTrackID()==application->GetPositronID() ){
-	isPrimary = 1;
-      }
-    }else if(particlename=="gamma") pID=22;
-    
-    if(pointIn==fGeomBoundary || pointIn==fUndefined || pointIn==fAlongStepDoItProc){
-      currentTotalDepE = totaledep;
+    switch(pointIn){
+    case fGeomBoundary:
+    case fAlongStepDoItProc:
+    case fUndefined:
+      bodyStatus += 0x01;
       unsummedDepE = totaledep;
-      steplengthTotal = steplength;
-      //if( currentTrackID!=0 ) G4cout << "trackID is not reset" << G4endl;
+      if( currentTrackID!=0 ) G4cout << "Warning: trackID is not reset" << G4endl;
       currentTrackID = trackID;
-    }
-    else{
-      currentTotalDepE += totaledep;
+      break;
+    default:
       unsummedDepE += totaledep;
-      steplengthTotal += steplength;
+      break;
     }
-    if(pointOut==fGeomBoundary || pointOut==fAlongStepDoItProc){
-      if( currentTrackID!=trackID ) G4cout << "different track" << G4endl;
+    currentTotalDepE += totaledep;
+    steplengthTotal += steplength;
+
+    switch(pointOut){
+    case fGeomBoundary:
+    case fAlongStepDoItProc:
+      bodyStatus += 0x02;
+      if( currentTrackID!=trackID ) G4cout << "Warning: different track" << G4endl;
       currentTrackID = 0;
-    }   
-    
+      break;
+    default:
+      break;
+    }
+
     if(bodyStatus > 0 && unsummedDepE>0.){
-      application->PutNtupleValue(pID,tE/MeV, pos/mm, mom, gtime, bodyTyp, bodyStatus, /*hitInfo,*/ unsummedDepE/MeV,isPrimary,trackID);
+      application->PutNtupleValue(pd->GetPDGEncoding(), tE, preStepPoint->GetPosition(), postStepPoint->GetPosition(), mom, gtime, bodyType, bodyStatus, unsummedDepE, trackID);
       unsummedDepE = 0.;
     }
   }
@@ -152,13 +145,24 @@ G4bool BodySD::ProcessHits(G4Step* aStep, G4TouchableHistory*/* ROhist*/)
 void BodySD::EndOfEvent(G4HCofThisEvent* )
 /////////////////////////////////////////////////
 {
+  ApplicationManager* application = ApplicationManager::GetApplicationManager();
+  application->SetTotalEdep(currentTotalDepE);
+  application->SetTotalStepLength(steplengthTotal);
+
+  unsummedDepE = 0.;
+  currentTotalDepE = 0.;
+  steplengthTotal = 0.;
+
+  fHitTrackID.clear();
+
   // make hits and push them to "Hit Coleltion"
-  for (G4int id=0; id< NCHANNEL; id++) {
+  /*
+    for (G4int id=0; id< NCHANNEL; id++) {
     if(edepbuf[id] > 0. ) {
-      CalHit* ahit= new CalHit(id, edepbuf[id]);
-      hitsCollection-> insert(ahit);
+    CalHit* ahit= new CalHit(id, edepbuf[id]);
+    hitsCollection-> insert(ahit);
     }
-  }
+    }*/
 }
 
 /////////////////////////////

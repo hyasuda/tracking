@@ -32,7 +32,7 @@ ApplicationManager::ApplicationManager()
 
   ntupleBody= new TTree ("ntupleBody","Tree for MCSteps and SimHits");
   ntupleBody->Branch("eventNum",&theEventNum,"eventNum/I");
-  ntupleBody->Branch("bodyTyp",&bodyTyp);
+  ntupleBody->Branch("bodyType",&fBodyType);
   ntupleBody->Branch("bodyStatus",&bodyStatus);
   ntupleBody->Branch("pID",&fPID);
   ntupleBody->Branch("EachDepE",&EachDepE);
@@ -40,11 +40,13 @@ ApplicationManager::ApplicationManager()
   ntupleBody->Branch("mom_y",&mom_y);
   ntupleBody->Branch("mom_z",&mom_z);
   ntupleBody->Branch("gtime",&gtime);
+  ntupleBody->Branch("prePos_x",&prePos_x);
+  ntupleBody->Branch("prePos_y",&prePos_y);
+  ntupleBody->Branch("prePos_z",&prePos_z);
   ntupleBody->Branch("pos_x",&pos_x);
   ntupleBody->Branch("pos_y",&pos_y);
   ntupleBody->Branch("pos_z",&pos_z);
   ntupleBody->Branch("tEnergy",&tEnergy);
-  ntupleBody->Branch("isPrimary",&fIsPrimary);
   ntupleBody->Branch("trackID",&fTrackID);
 
   ntupleDecay= new TTree ("ntupleDecay","Tree for MCParticles");
@@ -54,6 +56,7 @@ ApplicationManager::ApplicationManager()
   ntupleDecay->Branch("Dmom_x",&Dmom_x);
   ntupleDecay->Branch("Dmom_y",&Dmom_y);
   ntupleDecay->Branch("Dmom_z",&Dmom_z);
+  ntupleDecay->Branch("DtEnergy",&DtEnergy);
   ntupleDecay->Branch("Dpol_x",&Dpol_x);
   ntupleDecay->Branch("Dpol_y",&Dpol_y);
   ntupleDecay->Branch("Dpol_z",&Dpol_z);
@@ -142,7 +145,7 @@ void ApplicationManager::ClearNtuple()
 
   EachDepE.clear();
   fPID.clear();
-  bodyTyp.clear();
+  fBodyType.clear();
   bodyStatus.clear();
   mom_x.clear();
   mom_y.clear();
@@ -151,8 +154,10 @@ void ApplicationManager::ClearNtuple()
   pos_x.clear();
   pos_y.clear();
   pos_z.clear();
+  prePos_x.clear();
+  prePos_y.clear();
+  prePos_z.clear();
   tEnergy.clear();
-  fIsPrimary.clear();
   fTrackID.clear();
 
   fTmom_x.clear();
@@ -194,21 +199,23 @@ void ApplicationManager::PutDecayValue(G4double DTEnergy, G4ThreeVector Dpos, G4
   DparentID.push_back(parentID);
 }
 
-void ApplicationManager::PutNtupleValue(G4int parID, G4double TEnergy, G4ThreeVector pos, G4ThreeVector mom, G4double Gtime, G4int bodyType, G4int bodyStat, G4double eachDepE,G4int isPrimary, G4int trackID)
+void ApplicationManager::PutNtupleValue(G4int parID, G4double TEnergy, G4ThreeVector prePos, G4ThreeVector pos, G4ThreeVector mom, G4double Gtime, G4int bodyType, G4int bodyStat, G4double eachDepE, G4int trackID)
 {
   EachDepE.push_back(eachDepE/MeV);
-  bodyTyp.push_back(bodyType);
+  fBodyType.push_back(bodyType);
   bodyStatus.push_back(bodyStat);
   fPID.push_back(parID);
   mom_x.push_back(mom.x());
   mom_y.push_back(mom.y());
   mom_z.push_back(mom.z());
-  gtime.push_back(Gtime);//nsec
+  gtime.push_back(Gtime);
+  prePos_x.push_back(prePos.x());
+  prePos_y.push_back(prePos.y());
+  prePos_z.push_back(prePos.z());
   pos_x.push_back(pos.x());
   pos_y.push_back(pos.y());
   pos_z.push_back(pos.z());
-  tEnergy.push_back(TEnergy/MeV);
-  fIsPrimary.push_back(isPrimary);
+  tEnergy.push_back(TEnergy);
   fTrackID.push_back(trackID);
 
   return;

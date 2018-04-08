@@ -47,24 +47,23 @@ void EventAction::BeginOfEventAction(const G4Event* evt)
   }
  
   // initialisation per event
-  EnergyAbs = EnergyGap = 0.;
-  TrackLAbs = TrackLGap = 0.;
+  EnergyAbs = 0.;
+  TrackLAbs = 0.;
 
   //DataBroker 
   ApplicationManager* application = 
     ApplicationManager::GetApplicationManager();
   
+  //application->ClearNtuple();
   application->SetEventNum(evtNb);
-  application->ClearNtuple();
-
+ 
   ///DataBrokerEND///////////////////////
 }
 
 void EventAction::EndOfEventAction(const G4Event* evt)
 {
-  
+  /*
   G4SDManager* SDManager= G4SDManager::GetSDMpointer();
-  
   // get "Hit Collection of This Event"
   G4HCofThisEvent* HCTE= evt-> GetHCofThisEvent();
   if(! HCTE) return;
@@ -81,10 +80,15 @@ void EventAction::EndOfEventAction(const G4Event* evt)
     //G4int ich= (*hccal)[idx]-> GetID();
     //G4double edep= (*hccal)[idx]-> GetEdep();
   }
+  */
 
+  ApplicationManager* application =  ApplicationManager::GetApplicationManager();
+
+  EnergyAbs = application->GetTotalEdep();
+  TrackLAbs = application->GetTotalStepLength();
   //accumulates statistic
   //
-  runAct->fillPerEvent(EnergyAbs, EnergyGap, TrackLAbs, TrackLGap);
+  runAct->fillPerEvent(EnergyAbs, TrackLAbs);
 
 
 
@@ -95,27 +99,22 @@ void EventAction::EndOfEventAction(const G4Event* evt)
     G4cout << "---> End of event: " << evtNb << G4endl;	
 
     G4cout
-       << "   Absorber: total energy: " << std::setw(7)
+       << "   Absorber: total energy: " << std::setw(3)
                                         << G4BestUnit(EnergyAbs,"Energy")
-       << "       total track length: " << std::setw(7)
+       << "       total track length: " << std::setw(3)
                                         << G4BestUnit(TrackLAbs,"Length")
-       << G4endl
-       << "        Gap: total energy: " << std::setw(7)
-                                        << G4BestUnit(EnergyGap,"Energy")
-       << "       total track length: " << std::setw(7)
-                                        << G4BestUnit(TrackLGap,"Length")
        << G4endl;
-	  
   }
 
   //DataBroker 
-  ApplicationManager* application =  ApplicationManager::GetApplicationManager();
 
   application->FillDecayNtuple();
   application->FillNtuple();
   application->FillTransportNtuple();
   application->SetBeamIndex(-1);
-
+  
+  application->ClearNtuple();
+ 
   application->Update();
   ///DataBrokerEND///////////////////////
 

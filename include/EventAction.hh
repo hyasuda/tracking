@@ -18,15 +18,14 @@ public:
   void    EndOfEventAction(const G4Event*);
     
   void AddAbs(G4double de, G4double dl) {EnergyAbs += de; TrackLAbs += dl;};
-  void AddGap(G4double de, G4double dl) {EnergyGap += de; TrackLGap += dl;};
                      
   void SetPrintModulo(G4int    val)  {printModulo = val;};
     
 private:
    RunAction*  runAct;
    
-   G4double  EnergyAbs, EnergyGap;
-   G4double  TrackLAbs, TrackLGap;
+   G4double  EnergyAbs;
+   G4double  TrackLAbs;
                      
    G4int     printModulo;
                              

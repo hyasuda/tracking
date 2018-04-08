@@ -14,8 +14,6 @@
 #include <TStyle.h>
 #include <TGraph.h>
 #include <TGraphErrors.h>
-#include <TH1.h>
-#include <TH2.h>
 #include <TCanvas.h>
 #include <TNtuple.h>
 #include <TFile.h>
@@ -45,8 +43,9 @@ private:
 private:
   G4double thePrevTime;
   G4int theEventNum;
-  G4int thePositronID;
   G4int theBeamIndex;
+  G4double theTotalEdep;
+  G4double theTotalStepLength;
   std::ofstream theFileStream;
 
 private:
@@ -57,7 +56,7 @@ private:
   TTree* ntupleTransport;
   
   std::vector<int> fPID;
-  std::vector<int> bodyTyp;
+  std::vector<int> fBodyType;
   std::vector<int> bodyStatus;
   std::vector<double> EachDepE;
   std::vector<double> mom_x;
@@ -67,8 +66,10 @@ private:
   std::vector<double> pos_x;
   std::vector<double> pos_y;
   std::vector<double> pos_z;
+  std::vector<double> prePos_x;
+  std::vector<double> prePos_y;
+  std::vector<double> prePos_z;
   std::vector<double> tEnergy;
-  std::vector<int> fIsPrimary;
   std::vector<int> fTrackID;
 
   std::vector<double> DkEnergy;
@@ -112,14 +113,16 @@ public:
 public:
   G4double GetPrevTime() const {return thePrevTime;}
   G4int GetEventNum() const {return theEventNum;}
-  G4int GetPositronID() const {return thePositronID;}
-  G4int GetBeamIndex() const { return theBeamIndex; }
+  G4int GetBeamIndex() const {return theBeamIndex;}
+  G4double GetTotalEdep() const {return theTotalEdep;}
+  G4double GetTotalStepLength() const {return theTotalStepLength;}
   std::ofstream& GetFileStream(){return theFileStream;}
 
   void SetPrevTime(G4double time){thePrevTime=time;}
   void SetEventNum(G4int eventNum){theEventNum=eventNum;}
-  void SetPositronID(G4int trackID){thePositronID=trackID;}
-  void SetBeamIndex(G4int beamIndex){ theBeamIndex = beamIndex; }
+  void SetBeamIndex(G4int beamIndex){theBeamIndex=beamIndex;}
+  void SetTotalEdep(G4double edep){theTotalEdep=edep;}
+  void SetTotalStepLength(G4double length){theTotalStepLength=length;}
 
   TApplication* GetApplication() const {return theApplication;}
   void Clear(){gSystem->ProcessEvents();}
@@ -130,7 +133,7 @@ public:
   void FillNtuple(){ntupleBody->Fill();} 
   void FillDecayNtuple(){ntupleDecay->Fill();} 
   void FillTransportNtuple(){ntupleTransport->Fill();}
-  void PutNtupleValue(G4int pID, G4double tE, G4ThreeVector pos, G4ThreeVector mom, G4double Gtime, G4int bodyTyp, G4int bodyStatus, G4double EachDepE, G4int isPrimary, G4int trackID);
+  void PutNtupleValue(G4int pID, G4double tE, G4ThreeVector prePos, G4ThreeVector pos, G4ThreeVector mom, G4double Gtime, G4int bodyType, G4int bodyStatus, G4double EachDepE, G4int trackID);
   void PutDecayValue(G4double DTEnergy, G4ThreeVector Dpos, G4ThreeVector Dmom, G4ThreeVector Dpol,G4double DGtime, G4int PDG, G4int trackID, G4int parentID);
   void PutTransportValue(G4double TtEnergy, G4ThreeVector Tmom, G4double Ttime, G4ThreeVector Tpos, G4ThreeVector Tpol, G4ThreeVector Tmag);
   void ClearNtuple(); 

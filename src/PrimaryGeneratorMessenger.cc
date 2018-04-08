@@ -3,7 +3,7 @@
 #include "G4UIdirectory.hh"
 #include "G4UIcmdWithAString.hh"
 #include "G4UIcmdWithADouble.hh"
-
+#include "G4UIcmdWithABool.hh"
 
 PrimaryGeneratorMessenger::PrimaryGeneratorMessenger(
                                           PrimaryGeneratorAction* Gun)
@@ -45,11 +45,18 @@ PrimaryGeneratorMessenger::PrimaryGeneratorMessenger(
   BeamPolCmd->SetParameterName("beamPol",true);
   BeamPolCmd->SetDefaultValue(0.5);
   BeamPolCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
+
+  StablePrimaryCmd = new G4UIcmdWithABool("/mu/gun/stablePrimary",this);
+  StablePrimaryCmd->SetGuidance("Set primary particle stable or not");
+  StablePrimaryCmd->SetParameterName("StablePrimary",false);
+  StablePrimaryCmd->SetDefaultValue(false);
+  StablePrimaryCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
 }
 
 
 PrimaryGeneratorMessenger::~PrimaryGeneratorMessenger()
 {
+  delete StablePrimaryCmd;
   delete BeamPolCmd;
   delete BeamSpinRotCmd;
   delete BeamTypeCmd;
@@ -76,6 +83,10 @@ void PrimaryGeneratorMessenger::SetNewValue(
 
   if( command == BeamPolCmd )
     { Action->SetBeamPolarization(BeamPolCmd->GetNewDoubleValue(newValue)); }
+
+  if( command == StablePrimaryCmd )
+    { Action->SetStablePrimary(StablePrimaryCmd->GetNewBoolValue(newValue));
+      Action->UpdateParticleDefinition(); }
 }
 
 

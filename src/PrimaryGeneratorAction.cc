@@ -18,7 +18,8 @@
 
 PrimaryGeneratorAction::PrimaryGeneratorAction(
                                              DetectorConstruction* DC)
-  :Detector(DC),rndmFlag("off"),fBeamType("storage"),fBeamSpinRot("off"),fBeamPol(0.5),nEvent(0)
+  :Detector(DC),rndmFlag("off"),fBeamType("storage"),fBeamSpinRot("off"),fBeamPol(0.5),fStablePrimary(false),
+   nEvent(0)
 {
   G4int n_particle = 1;
   particleGun  = new G4ParticleGun(n_particle);
@@ -26,15 +27,20 @@ PrimaryGeneratorAction::PrimaryGeneratorAction(
   //create a messenger for this class
   gunMessenger = new PrimaryGeneratorMessenger(this);
 
-  // default particle kinematic
+  UpdateParticleDefinition();
+}
 
+void PrimaryGeneratorAction::UpdateParticleDefinition()
+{
   G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
   G4String particleName;
 
   G4ParticleDefinition* particle
     = particleTable->FindParticle(particleName="mu+");
 
-  particle->SetPDGStable(true);
+  if( fStablePrimary ){
+    particle->SetPDGStable(true);
+  }
 
   particleGun->SetParticleDefinition(particle);
 }
@@ -113,7 +119,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 {
   //this function is called at the begining of event
   // 
-  
+
   double mu_mass = G4MuonPlus::MuonPlus()->GetPDGMass()*MeV;
   double Pmu = 300*MeV; // /c
   double Emu = sqrt(Pmu*Pmu+mu_mass*mu_mass);
@@ -133,6 +139,8 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
   G4double poly0 = 1.;
   G4double polz0 = 0.;
 
+  ApplicationManager* application = ApplicationManager::GetApplicationManager();
+  
   if(rndmFlag=="on" || rndmFlag=="repeat"){
     if(fBeamX.size()==0){
       G4cerr << "**********************************" << G4endl;
@@ -148,7 +156,6 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
     }else if(rndmFlag=="repeat"){
       index = nEvent%fBeamX.size();
     }
-    ApplicationManager* application = ApplicationManager::GetApplicationManager();
     application->SetBeamIndex(index);
 
     x0 = fBeamX.at(index);
@@ -205,8 +212,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
   
   particleGun->GeneratePrimaryVertex(anEvent);
 
+  application->PutDecayValue(particleGun->GetParticleEnergy(), particleGun->GetParticlePosition(), particleGun->GetParticleMomentum()*particleGun->GetParticleMomentumDirection(), particleGun->GetParticlePolarization(), particleGun->GetParticleTime(), particleGun->GetParticleDefinition()->GetPDGEncoding(), 1, 0);
+  
   nEvent++;
 }
-
-
-
