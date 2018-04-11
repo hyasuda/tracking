@@ -80,8 +80,7 @@ int main(int argc,char** argv)
   EventAction* event_action = new EventAction(run_action);
   runManager->SetUserAction(event_action);
 
-  G4UserSteppingAction* stepping_action =
-                    new SteppingAction(detector, event_action);
+  G4UserSteppingAction* stepping_action = new SteppingAction();
   runManager->SetUserAction(stepping_action);
 
 

@@ -36,37 +36,34 @@ EventAction::~EventAction()
 
 void EventAction::BeginOfEventAction(const G4Event* evt)
 {  
- G4int evtNb = evt->GetEventID();
- extern G4int DokodemoBango;
+  G4int evtNb = evt->GetEventID();
+  extern G4int DokodemoBango;
   DokodemoBango=evtNb;
- extern G4int PickBegin;
+  extern G4int PickBegin;
   PickBegin=0;
- if (evtNb%printModulo == 0) { 
-   G4cout << "\n---> Begin of event: " << evtNb << G4endl;
-   CLHEP::HepRandom::showEngineStatus();
- }
+  if (evtNb%printModulo == 0) { 
+    G4cout << "\n---> Begin of event: " << evtNb << G4endl;
+    CLHEP::HepRandom::showEngineStatus();
+  }
  
- // initialisation per event
- EnergyAbs = EnergyGap = 0.;
- TrackLAbs = TrackLGap = 0.;
+  // initialisation per event
+  EnergyAbs = 0.;
+  TrackLAbs = 0.;
 
-//DataBroker 
- ApplicationManager* application = 
- ApplicationManager::GetApplicationManager();
-
- application->SetEdepByEvent(0.0);
-
- application->SetEventNum(evtNb);
- application->ClearNtuple(evtNb);
-
-///DataBrokerEND///////////////////////
+  //DataBroker 
+  ApplicationManager* application = 
+    ApplicationManager::GetApplicationManager();
+  
+  //application->ClearNtuple();
+  application->SetEventNum(evtNb);
+ 
+  ///DataBrokerEND///////////////////////
 }
 
 void EventAction::EndOfEventAction(const G4Event* evt)
 {
-
+  /*
   G4SDManager* SDManager= G4SDManager::GetSDMpointer();
-
   // get "Hit Collection of This Event"
   G4HCofThisEvent* HCTE= evt-> GetHCofThisEvent();
   if(! HCTE) return;
@@ -82,12 +79,16 @@ void EventAction::EndOfEventAction(const G4Event* evt)
   for(G4int idx=0; idx< nhits; idx++) {
     //G4int ich= (*hccal)[idx]-> GetID();
     //G4double edep= (*hccal)[idx]-> GetEdep();
-
   }
+  */
 
+  ApplicationManager* application =  ApplicationManager::GetApplicationManager();
+
+  EnergyAbs = application->GetTotalEdep();
+  TrackLAbs = application->GetTotalStepLength();
   //accumulates statistic
   //
-  runAct->fillPerEvent(EnergyAbs, EnergyGap, TrackLAbs, TrackLGap);
+  runAct->fillPerEvent(EnergyAbs, TrackLAbs);
 
 
 
@@ -98,40 +99,24 @@ void EventAction::EndOfEventAction(const G4Event* evt)
     G4cout << "---> End of event: " << evtNb << G4endl;	
 
     G4cout
-       << "   Absorber: total energy: " << std::setw(7)
+       << "   Absorber: total energy: " << std::setw(3)
                                         << G4BestUnit(EnergyAbs,"Energy")
-       << "       total track length: " << std::setw(7)
+       << "       total track length: " << std::setw(3)
                                         << G4BestUnit(TrackLAbs,"Length")
-       << G4endl
-       << "        Gap: total energy: " << std::setw(7)
-                                        << G4BestUnit(EnergyGap,"Energy")
-       << "       total track length: " << std::setw(7)
-                                        << G4BestUnit(TrackLGap,"Length")
        << G4endl;
-	  
-  }  
-//DataBroker 
-  ApplicationManager* application = 
-  ApplicationManager::GetApplicationManager();
+  }
 
-  G4ThreeVector pos = application->GetHitPosition();
+  //DataBroker 
 
-  //G4double hitE = application->GetHitTEnergy();
-
-  G4double edep = application->GetEdepByEvent();
-
-  const G4String tab = "\t";
-
-  int hitInfo=application->GetHitInfo();
-  int eventNum=-1;//application->GetEventNum();
   application->FillDecayNtuple();
   application->FillNtuple();
-  application->Fill(edep/MeV);
-  printf("EndOfEventAction eventNum=%d hitInfo=%d dep=%lf\n",eventNum,hitInfo,edep/MeV);
+  application->FillTransportNtuple();
   application->SetBeamIndex(-1);
-
+  
+  application->ClearNtuple();
+ 
   application->Update();
-///DataBrokerEND///////////////////////
+  ///DataBrokerEND///////////////////////
 
 }  
 

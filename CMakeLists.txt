@@ -70,8 +70,12 @@ set(MUONGM2EDMSIM_SCRIPTS
   FLDATA/20160422_cm12weak.txt
   FLDATA/3CBs-Narrow-region-n3E-4-Abe20171120.txt
   FLDATA/3CBs-Narrow-region-n3E-4-Abe20171120_n15.txt
+  FLDATA/20160422_coil1_weak.txt
+  FLDATA/round_kicker_w_wall_401_DC.table
   beamSample/sample_1200_good.txt
   beamSample/sample4_5420.txt
+  beamSample/t_test0_x5_y148_785_typcirmod_tCut14882.txt
+  beamSample/t_test_2018Feb8.txt
   )
 
 foreach(_script ${MUONGM2EDMSIM_SCRIPTS})

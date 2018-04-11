@@ -7,6 +7,8 @@
 class PrimaryGeneratorAction;
 class G4UIdirectory;
 class G4UIcmdWithAString;
+class G4UIcmdWithADouble;
+class G4UIcmdWithABool;
 
 
 class PrimaryGeneratorMessenger: public G4UImessenger
@@ -22,6 +24,10 @@ private:
   G4UIdirectory*               gunDir; 
   G4UIcmdWithAString*          RndmCmd;
   G4UIcmdWithAString*          BeamSampleCmd;
+  G4UIcmdWithAString*          BeamTypeCmd;
+  G4UIcmdWithAString*          BeamSpinRotCmd;
+  G4UIcmdWithADouble*          BeamPolCmd;
+  G4UIcmdWithABool*            StablePrimaryCmd;
 };
 
 

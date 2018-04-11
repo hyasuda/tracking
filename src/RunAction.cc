@@ -7,10 +7,7 @@
 #include "G4UnitsTable.hh"
 #include <stdio.h>
 
-#include "TROOT.h"
-#include "TH1.h"
-#include "TFile.h"
-#include "TTree.h"
+//#include "TROOT.h"
 
 
 RunAction::RunAction():theFileName("")
@@ -19,17 +16,12 @@ RunAction::RunAction():theFileName("")
 
   // initialize root
   //  gROOT-> Reset();
-  // define histograms
-  hist_shower = new TH1D("shower", "Shower Development", 2000, 0., 2000.);
-  hist_shower-> GetXaxis()-> SetTitle("Depth");
-  hist_shower-> GetYaxis()-> SetTitle("Deposit Energy (MeV)");
- }
+
+}
 
 
 RunAction::~RunAction()
 {
-   delete hist_shower;
-   printf("hist_shower delete\n");
 }
 
 
@@ -42,32 +34,24 @@ void RunAction::BeginOfRunAction(const G4Run* aRun)
   
   //initialize cumulative quantities
   //
-  sumEAbs = sum2EAbs =sumEGap = sum2EGap = 0.;
-  sumLAbs = sum2LAbs =sumLGap = sum2LGap = 0.; 
+  sumEAbs = sum2EAbs = 0.;
+  sumLAbs = sum2LAbs = 0.; 
 
-//DataBroker 
-  ApplicationManager* application =
-    ApplicationManager::GetApplicationManager();
-  application -> SetEdepByRun( 0.0 );
+  //DataBroker 
+  ApplicationManager* application = ApplicationManager::GetApplicationManager();
   application->Open(theFileName);
   application->Clear();
-////DataBrokerEND///////////////
-
-  hist_shower->Reset();
-  printf("hist_shower Reset\n");
+  ////DataBrokerEND///////////////
 }
 
 
-void RunAction::fillPerEvent(G4double EAbs, G4double EGap,
-			     G4double LAbs, G4double LGap)
+void RunAction::fillPerEvent(G4double EAbs,
+			     G4double LAbs)
 {
   //accumulate statistic
   //
   sumEAbs += EAbs;  sum2EAbs += EAbs*EAbs;
-  sumEGap += EGap;  sum2EGap += EGap*EGap;
-  
   sumLAbs += LAbs;  sum2LAbs += LAbs*LAbs;
-  sumLGap += LGap;  sum2LGap += LGap*LGap;  
 }
 
 
@@ -82,17 +66,9 @@ void RunAction::EndOfRunAction(const G4Run* aRun)
   G4double rmsEAbs = sum2EAbs - sumEAbs*sumEAbs;
   if (rmsEAbs >0.) rmsEAbs = std::sqrt(rmsEAbs); else rmsEAbs = 0.;
   
-  sumEGap /= NbOfEvents; sum2EGap /= NbOfEvents;
-  G4double rmsEGap = sum2EGap - sumEGap*sumEGap;
-  if (rmsEGap >0.) rmsEGap = std::sqrt(rmsEGap); else rmsEGap = 0.;
-  
   sumLAbs /= NbOfEvents; sum2LAbs /= NbOfEvents;
   G4double rmsLAbs = sum2LAbs - sumLAbs*sumLAbs;
   if (rmsLAbs >0.) rmsLAbs = std::sqrt(rmsLAbs); else rmsLAbs = 0.;
-  
-  sumLGap /= NbOfEvents; sum2LGap /= NbOfEvents;
-  G4double rmsLGap = sum2LGap - sumLGap*sumLGap;
-  if (rmsLGap >0.) rmsLGap = std::sqrt(rmsLGap); else rmsLGap = 0.;
   
   //print
   //
@@ -100,33 +76,23 @@ void RunAction::EndOfRunAction(const G4Run* aRun)
      << "\n--------------------End of Run------------------------------\n"
      << "\n mean Energy in Absorber : " << G4BestUnit(sumEAbs,"Energy")
      << " +- "                          << G4BestUnit(rmsEAbs,"Energy")  
-     << "\n mean Energy in Gap      : " << G4BestUnit(sumEGap,"Energy")
-     << " +- "                          << G4BestUnit(rmsEGap,"Energy")
      << G4endl;
      
   G4cout
      << "\n mean trackLength in Absorber : " << G4BestUnit(sumLAbs,"Length")
      << " +- "                               << G4BestUnit(rmsLAbs,"Length")  
-     << "\n mean trackLength in Gap      : " << G4BestUnit(sumLGap,"Length")
-     << " +- "                               << G4BestUnit(rmsLGap,"Length")
      << "\n------------------------------------------------------------\n"
      << G4endl;   
 
-//DataBroker 
-  ApplicationManager* application =
-    ApplicationManager::GetApplicationManager();
-
-  G4double total = application -> GetEdepByRun();
-
-  G4cout << "----" << G4endl;
-  G4cout << "TOTAL:" << total/MeV << "MeV" << G4endl;
+  //DataBroker 
+  ApplicationManager* application = ApplicationManager::GetApplicationManager();
 
   std::ofstream& ofs = application -> GetFileStream();
   ofs.close();
 
   application->Update();
   application->Save();
-/////DataBrokerEND///////////////
+  /////DataBrokerEND///////////////
 
 }
 
