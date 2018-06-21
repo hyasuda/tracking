@@ -5,7 +5,6 @@
 
 #include "Randomize.hh"
 
-//#include "QGSP.hh"
 #include "DetectorConstruction.hh"
 #include "F04PhysicsList.hh"
 #include "PrimaryGeneratorAction.hh"
@@ -56,16 +55,11 @@ int main(int argc,char** argv)
   // Construct the default run manager
   G4RunManager * runManager = new G4RunManager;
 
-  G4int nvane = 24;
-  if(argc>2){
-    nvane = atoi(argv[2]);
-  }
   // Set mandatory initialization classes
-  DetectorConstruction* detector = new DetectorConstruction(nvane);
+  DetectorConstruction* detector = new DetectorConstruction();
   runManager->SetUserInitialization(detector);
 
   //  G4VUserPhysicsList* physics = new QGSP;
-  //G4VUserPhysicsList* physics = new ExN03PhysicsList;
   G4VUserPhysicsList* physics = new F04PhysicsList("QGSP_BERT");//Toshito-san
   runManager->SetUserInitialization(physics);
 
@@ -100,8 +94,8 @@ int main(int argc,char** argv)
       //tyosioka 170421 for GDML
       //
       G4GDMLParser parser;
-      if (argc>=4){
-	parser.Write(argv[3], G4TransportationManager::GetTransportationManager()->
+      if (argc>=3){
+	parser.Write(argv[2], G4TransportationManager::GetTransportationManager()->
 		     GetNavigatorForTracking()->GetWorldVolume()->GetLogicalVolume());
       }
     }

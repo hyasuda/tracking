@@ -22,14 +22,7 @@ DetectorMessenger::DetectorMessenger(DetectorConstruction* Det)
   UpdateCmd->SetGuidance("This command MUST be applied before \"beamOn\" ");
   UpdateCmd->SetGuidance("if you changed geometrical value(s).");
   UpdateCmd->AvailableForStates(G4State_Idle);
-   
-  MagFieldCmd = new G4UIcmdWithADoubleAndUnit("/mu/det/setField",this);  
-  MagFieldCmd->SetGuidance("Define magnetic field.");
-  MagFieldCmd->SetGuidance("Magnetic field will be in Z direction.");
-  MagFieldCmd->SetParameterName("Bz",false);
-  MagFieldCmd->SetUnitCategory("Magnetic flux density");
-  MagFieldCmd->AvailableForStates(G4State_PreInit,G4State_Idle);  
- 
+
   NbVanesCmd = new G4UIcmdWithAnInteger("/mu/det/nvanes",this);
   NbVanesCmd->SetGuidance("set the number of vanes of detector");
   NbVanesCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
@@ -40,7 +33,6 @@ DetectorMessenger::DetectorMessenger(DetectorConstruction* Det)
 DetectorMessenger::~DetectorMessenger()
 {
   delete UpdateCmd;
-  delete MagFieldCmd;
   delete NbVanesCmd;
   delete detDir;
   delete muDir;  
@@ -51,9 +43,6 @@ void DetectorMessenger::SetNewValue(G4UIcommand* command,G4String newValue)
 { 
   if( command == UpdateCmd )
    { Detector->UpdateGeometry(); }
-
-  if( command == MagFieldCmd )
-    { Detector->SetMagField(/*MagFieldCmd->GetNewDoubleValue(newValue)*/);}
 
   if( command == NbVanesCmd )
     { Detector->SetNumberOfVanes(NbVanesCmd->GetNewIntValue(newValue));

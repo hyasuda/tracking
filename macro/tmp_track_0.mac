@@ -21,7 +21,7 @@
 /mu/mag/withSpin false
 #
 # set nvane of detector
-/mu/det/nvanes 48
+/mu/det/nvanes 40
 #
 # set muon beam distribution on/off
 /mu/gun/rndm on

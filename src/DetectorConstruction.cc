@@ -7,7 +7,8 @@
 #include "G4Box.hh"
 #include "G4Tubs.hh"
 #include "G4Torus.hh"
-#include "G4Sphere.hh"
+//#include "G4Sphere.hh"
+#include "G4VSolid.hh"
 #include "G4LogicalVolume.hh"
 #include "G4PVPlacement.hh"
 #include "G4PVReplica.hh"
@@ -35,8 +36,8 @@
 #include "G4PhysicalConstants.hh"
 
 DetectorConstruction::DetectorConstruction(const G4int nvane)
-  :defaultMaterial(0),fNvane(nvane),
-   magField(0), mymagField(0)
+  :defaultMaterial(0),fNvane(nvane)
+   //magField(0), mymagField(0)
 {
   // materials
   DefineMaterials();
@@ -52,11 +53,11 @@ DetectorConstruction::DetectorConstruction(const G4int nvane)
 DetectorConstruction::~DetectorConstruction()
 { delete detectorMessenger;}
 
-
+/*
 G4VPhysicalVolume* DetectorConstruction::Construct()
 {
   return ConstructCalorimeter();
-}
+  }*/
 
 
 void DetectorConstruction::DefineMaterials()
@@ -216,19 +217,18 @@ G4Material* Epoxy = new G4Material("Epoxy", density= 1.7*g/cm3 ,ncomponents=3);
 Epoxy->AddElement(C, natoms=10);
 Epoxy->AddElement(H, natoms=10);
 Epoxy->AddElement(O, natoms= 2);
-
+ 
 // Tungsten heavy alloy
  G4Material* HAC2 = new G4Material("HAC2", density=17.9*g/cm3, ncomponents=3);
  HAC2->AddElement(W, natoms=94);
  HAC2->AddElement(Ni, natoms=4);
  HAC2->AddElement(Cu, natoms=2);
 
- /*
  G4Material* HAC1 = new G4Material("HAC1", density=18.5*g/cm3, ncomponents=3);
  HAC1->AddElement(W, natoms=97);
  HAC1->AddElement(Ni, natoms=2);
  HAC1->AddElement(Cu, natoms=1);
- */
+
 
 // CRFP (Carbon Fiber Reinforced Polymer): M55 Quasiisotropic Layup
 // Taken from geant4 advanced example cosmicray_charging
@@ -303,17 +303,16 @@ G4cout << *(G4Material::GetMaterialTable()) << G4endl;
 
 
 //default materials of the World
- defaultMaterial  = Vacuum;
+ defaultMaterial = Vacuum;
  sensorMat = PureSi;
  subMat = G10_Plate;
- //tubeMat = LeadTangstate;
  tubeMat = PurePb;
- //Al,Polycarbonate, Polymethylmethacrylate ,LeadTangstate
+ shieldMat = PurePb;
  //storageGas = N2m2;
  //storageGas = N2m3;
  //storageGas = N2m4;
  //storageGas = N2m1;
- // storageGas = N2m0;
+ //storageGas = N2m0;
  storageGas = Vacuum;
  fpcMat = Kapton;
  frameMat = CFRP;
@@ -321,7 +320,8 @@ G4cout << *(G4Material::GetMaterialTable()) << G4endl;
 }
 
 
-G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter()
+//G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter()
+G4VPhysicalVolume* DetectorConstruction::Construct()
 {
 
   // Clean old geometry, if any
@@ -332,7 +332,7 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter()
   G4SolidStore::GetInstance()->Clean();
 
   // complete the Calor parameters definition
-  ComputeCalorParameters();
+  //ComputeCalorParameters();
   
  
   //     
@@ -357,99 +357,58 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter()
   
 
   //
-  //Another box
+  // Another box
   //
   solidFrame = new G4Box("Frame",
                    0.5*WorldSize*0.95, 0.5*WorldSize*0.95, 0.5*WorldSize*0.95);
                        
-  logicFrame = new G4LogicalVolume(solidFrame,		
-                                   //defaultMaterial,	
+  logicFrame = new G4LogicalVolume(solidFrame,
                                    storageGas,
 				   "Frame");		
                                    
   physiFrame = new G4PVPlacement(0,			
   				 G4ThreeVector(),	
-                                 logicFrame,		
+                                 logicFrame,
                                  "Frame",		
                                  logicWorld,		
                                  false,			
-                                 0);			
-
-
-  //G4double d_center = 96.;
-  G4double d_center = 150.;
-  G4double vvaneW = 217.5;
-  G4double vvaneT = 6.;
-  G4double vvaneH = 350.;
-  G4double r_vane = 0.5*d_center + 0.5*vvaneW;
-  
-  G4double sensorW = 98.8;
-  G4double sensorT = 0.32;
-  G4double sensorH = 98.8;
-  
-  G4double subW2 = 17.;
-  G4double deadspace = 0.25 * (vvaneW - subW2 - 2.*sensorW);
-  G4double subH2 = 2.*sensorH + 4.*deadspace; 
-  
-  G4double subW = 217.5;
-  G4double subT = 1.6;
-  G4double subH = vvaneH - subH2; 
-  
-  G4double fpcW = 2.*(sensorW + deadspace);
-  G4double fpcT = 0.1;
-  G4double fpcH = subH2;
-
-  G4double fpc2W = subW;
-  G4double fpc2T = 0.125;
-  G4double fpc2H = 80.;
-
-  G4double asicW = 5;
-  G4double asicT = 0.5;
-  G4double asicH = 9.;
-
-  G4double fpgaW = 40.;
-  G4double fpgaT = 3.;
-  G4double fpgaH = 40.;
-
-  G4double sfpW = 10.;
-  G4double sfpT = 10.;
-  G4double sfpH = 70.;
-
-  G4double frameW = subH2;
-  G4double frameT = 4.;
-  G4double frameH = subH2;
+                                 0);		
 
 
   //
-  //virtual vane
+  // virtual vane
   //
-  G4cout << "Number of vanes = " << fNvane << G4endl;
 
+  const G4double vvaneW = 208.*mm;
+  const G4double vvaneT = 6.*mm;
+  const G4double vvaneH = 490.5*mm;
+  const G4double r_vane = 82.*mm+0.5*vvaneW;
+  
   sol_vvane = new G4Box("vvane", 0.5*vvaneW*mm, 0.5*vvaneT*mm, 0.5*vvaneH*mm);
   log_vvane = new G4LogicalVolume(sol_vvane,
 				  defaultMaterial,
 				  "vvane");
   
   for(int ii=0; ii<fNvane; ii++){
-    G4double rangle = (G4double)2.*pi/(G4double)fNvane*ii;
+    G4double rangle = 2.*pi/(G4double)fNvane*ii*radian;
     G4RotationMatrix *rotvu = new G4RotationMatrix();
-    rotvu->rotateZ(-rangle*rad);
+    rotvu->rotateZ(-rangle);
     phys_vvane = new G4PVPlacement(rotvu,
 				   G4ThreeVector(r_vane*cos(rangle),
 						 r_vane*sin(rangle),
-						 vvaneH/2.),
+						 0.5*vvaneH),
 				   log_vvane,
 				   "vvane",
 				   logicFrame,
 				   false,
 				   ii);
     G4RotationMatrix *rotvd = new G4RotationMatrix();
-    rotvd->rotateX(pi*rad);
-    rotvd->rotateZ(rangle*rad);
+    rotvd->rotateX(pi*radian);
+    rotvd->rotateZ(rangle);
     phys_vvane = new G4PVPlacement(rotvd,
 				   G4ThreeVector(r_vane*cos(rangle),
 						 r_vane*sin(rangle),
-						 -vvaneH/2.),
+						 -0.5*vvaneH),
 				   log_vvane,
 				   "vvane",
 				   logicFrame,
@@ -461,11 +420,30 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter()
   //
   // --- silicon strip sensor
   //
-  G4double xcenter = sensorW + deadspace + subW2 - 0.5*vvaneW; 
-  G4double zcenter = sensorH + 2*deadspace - 0.5*vvaneH;   
-  G4double splusd  = 0.5*sensorW + deadspace;
 
-  sol_sensor = new G4Box("sensor", 0.5*sensorW*mm, 0.5*sensorT*mm, 0.5*sensorH*mm);
+  const G4double sensorW = 98.77*mm;
+  const G4double sensorT = 0.32*mm;
+  const G4double sensorH = 98.77*mm;
+  const G4double deadspace = 0.5*mm;
+
+  G4double subW2 = 17.;
+  G4double subH2 = 2.*sensorH + 4.*deadspace; 
+  
+  G4double subW = 217.5;
+  G4double subT = 1.6;
+  G4double subH = vvaneH - subH2; 
+  
+  
+  const G4double xcenter = 108.23*mm - 0.5*vvaneW; //sensorW + deadspace + subW2 - 0.5*vvaneW; 
+  const G4double zcenter = sensorH + deadspace - 0.5*vvaneH;   
+  const G4double splusd  = 0.5*sensorW + 0.5*deadspace;
+
+  const G4double frameW = subH2;
+  const G4double frameT = 4.*mm;
+  const G4double frameH = subH2;
+
+
+  sol_sensor = new G4Box("sensor", 0.5*sensorW, 0.5*sensorT, 0.5*sensorH);
   log_sensor = new G4LogicalVolume(sol_sensor,
 				   sensorMat,
 				   "sensor");
@@ -478,10 +456,10 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter()
     if (ii/4==0){ iy = 1;} else { iy = -1;} 
     if ((ii/2)%2==0){ iz = 1;} else { iz = -1;} 
     
-    phys_sensor1 = new G4PVPlacement(0,
-				     G4ThreeVector((xcenter + ix*splusd)*mm,
-						   iy*0.5*frameT,
-						   (zcenter + iz*splusd)*mm), 
+    phys_sensor = new G4PVPlacement(0,
+				    G4ThreeVector(xcenter + ix*splusd,
+						  iy*0.5*frameT,
+						  zcenter + iz*splusd), 
 				     log_sensor,
 				     "sensor",
 				     log_vvane,
@@ -493,6 +471,15 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter()
   //
   // -- FPC
   //
+
+  G4double fpcW = 2.*(sensorW + deadspace);
+  G4double fpcT = 0.1*mm;
+  G4double fpcH = subH2*mm;
+
+  G4double fpc2W = subW;
+  G4double fpc2T = 0.125*mm;
+  G4double fpc2H = 80.*mm;
+
   sol_fpc = new G4Box("fpc", 0.5*fpcW*mm, 0.5*fpcT*mm, (0.5*fpcH-1.)*mm); // temporary
   log_fpc = new G4LogicalVolume(sol_fpc,
 				fpcMat,
@@ -542,6 +529,7 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter()
   //
   // --- Frame
   //
+
   G4VSolid *out = new G4Box("out", 0.5*frameW*mm, 0.5*frameT*mm, 0.5*frameH*mm);
   G4VSolid *in1 = new G4Box("in1", 93.8*0.5*mm, (0.5*frameT+0.5)*mm, 98.8*0.5*mm);
   G4VSolid *in2 = new G4Box("in2", 93.8*0.5*mm, (0.5*frameT+0.5)*mm, 98.8*0.5*mm);
@@ -569,6 +557,11 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter()
   //
   // --- SliT128B, etc., just for fun
   //
+
+  const G4double asicW = 7.*mm;
+  const G4double asicT = 0.5*mm;
+  const G4double asicH = 15.*mm;
+
   sol_asic = new G4Box("asic", 0.5*asicW*mm, 0.5*asicT*mm, 0.5*asicH*mm);
   log_asic = new G4LogicalVolume(sol_asic,
 				 subMat, 
@@ -579,9 +572,9 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter()
     jj = ii;
     if (ii > 15) jj = ii-16;
     phys_asic = new G4PVPlacement(0,
-				  G4ThreeVector((-0.5*vvaneW + (jj+1)*12.)*mm,
-						0.5*(frameT + sensorT + fpcT + asicT)*mm,
-						(zcenter+sensorH+deadspace+0.5*fpc2H - 13.*(ii/16))*mm), 
+				  G4ThreeVector((-0.5*vvaneW + (jj+1)*12.),
+						0.5*(frameT + sensorT + fpcT + asicT),
+						(zcenter+sensorH+deadspace+0.5*fpc2H - 13.*(ii/16))), 
 				  log_asic,
 				  "asic",
 				  log_vvane,
@@ -602,15 +595,19 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter()
 				  0);
   }
   
-  
-  sol_fpga = new G4Box("fpga", 0.5*fpgaW*mm, 0.5*fpgaT*mm, 0.5*fpgaH*mm);
+
+  const G4double fpgaW = 40.*mm;
+  const G4double fpgaT = 3.*mm;
+  const G4double fpgaH = 40.*mm;
+
+  sol_fpga = new G4Box("fpga", 0.5*fpgaW, 0.5*fpgaT, 0.5*fpgaH);
   log_fpga = new G4LogicalVolume(sol_fpga,
 				 subMat, 
 				 "fpga");
   phys_fpga = new G4PVPlacement(0,
 				G4ThreeVector(0.*mm,
-					      0.5*(frameT + sensorT + fpcT + fpgaT)*mm,
-					      (zcenter+sensorH+deadspace+fpc2H+35.)*mm), 
+					      0.5*(frameT + sensorT + fpcT + fpgaT),
+					      (zcenter+sensorH+deadspace+fpc2H+35.)), 
 				log_fpga,
 				"fpga",
 				log_vvane,
@@ -618,13 +615,17 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter()
 				0);
   phys_fpga = new G4PVPlacement(0,
 				G4ThreeVector(0.*mm,
-					      -0.5*(frameT + sensorT + fpcT + fpgaT)*mm,
-					      (zcenter+sensorH+deadspace+fpc2H+35.)*mm), 
+					      -0.5*(frameT + sensorT + fpcT + fpgaT),
+					      (zcenter+sensorH+deadspace+fpc2H+35.)), 
 				log_fpga,
 				"fpga",
 				log_vvane,
 				false,
 				0);
+  G4double sfpW = 10.;
+  G4double sfpT = 10.;
+  G4double sfpH = 70.;
+
 
   sol_sfp = new G4Box("sfp", 0.5*sfpW*mm, 0.5*sfpT*mm, 0.5*sfpH*mm);
   log_sfp = new G4LogicalVolume(sol_sfp,
@@ -699,28 +700,47 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter()
 				false,
 				0);
 
+  //
+  // --- Center shield
+  //
+  
+  const G4double shield_din = 58.5*mm;
+  const G4double shield_dout = 64.5*mm;
+  const G4double shieldH = 400.*mm;
+
+  sol_shield = new G4Tubs("shield",shield_din,shield_dout,0.5*shieldH,
+			  0.*deg,360.*deg);
+  log_shield = new G4LogicalVolume(sol_shield,
+				   shieldMat,
+				   "shield");
+  phys_shield = new G4PVPlacement(0,
+				  G4ThreeVector(),
+				  log_shield,
+				  "shield",
+				  logicFrame,
+				  false,
+				  0);
 
   //
   // --- polyimide window
   //
-  //G4double window_din = 218.*2.+tube_dout;
-  //G4double window_dout = 218.2*2.+tube_dout;
-  G4double window_din = 305.*2;
-  G4double window_dout = 305.1*2.;
 
-  G4double windowH = 200.;
-  sol_window = new G4Tubs("window",window_din/2*mm,window_dout/2*mm,windowH/2*mm,
-			0.*deg,360.*deg);
+  const G4double window_din = 305.*mm;
+  const G4double window_dout = 305.1*mm;
+  const G4double windowH = 200.*mm;
+
+  sol_window = new G4Tubs("window",window_din,window_dout,windowH,
+			  0.*deg,360.*deg);
   log_window = new G4LogicalVolume(sol_window,
-				 windowMat,
-				 "window");
+				   windowMat,
+				   "window");
   phys_window = new G4PVPlacement(0,
-				G4ThreeVector(),
-				log_window,
-				"window",
-				logicFrame,
-				false,
-				0);
+				  G4ThreeVector(),
+				  log_window,
+				  "window",
+				  logicFrame,
+				  false,
+				  0);
   
 
 
@@ -778,36 +798,10 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter()
   return physiWorld;
 }
 
-
-void DetectorConstruction::PrintCalorParameters()
-{}
-
-
-#include "G4FieldManager.hh"
-#include "G4TransportationManager.hh"
-
-void DetectorConstruction::SetMagField(/*G4double fieldValue*/)
-{
-
-  //apply a global uniform magnetic field along Z axis
-  
-  G4FieldManager* fieldMgr
-   = G4TransportationManager::GetTransportationManager()->GetFieldManager();
-
-  mymagField = new MagneticField();
-
-  mymagField->pStepper = new G4ClassicalRK4(mymagField->fEquation,12);
-
-  fieldMgr->SetDetectorField(mymagField);
-  fieldMgr->CreateChordFinder(mymagField);
-
-}
-
-
 #include "G4RunManager.hh"
 
 void DetectorConstruction::UpdateGeometry()
 {
-  G4RunManager::GetRunManager()->DefineWorldVolume(ConstructCalorimeter());
+  G4RunManager::GetRunManager()->DefineWorldVolume(Construct());
 }
 
