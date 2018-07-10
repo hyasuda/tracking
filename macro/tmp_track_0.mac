@@ -22,6 +22,7 @@
 #
 # set nvane of detector
 /mu/det/nvanes 40
+/mu/det/doStrip true
 #
 # set muon beam distribution on/off
 /mu/gun/rndm on
