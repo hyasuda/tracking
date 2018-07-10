@@ -4,9 +4,9 @@
 #include "G4UIdirectory.hh"
 #include "G4UIcmdWithAString.hh"
 #include "G4UIcmdWithAnInteger.hh"
-#include "G4UIcmdWithADoubleAndUnit.hh"
+//#include "G4UIcmdWithADoubleAndUnit.hh"
 #include "G4UIcmdWithoutParameter.hh"
-
+#include "G4UIcmdWithABool.hh"
 
 DetectorMessenger::DetectorMessenger(DetectorConstruction* Det)
 :Detector(Det)
@@ -26,12 +26,20 @@ DetectorMessenger::DetectorMessenger(DetectorConstruction* Det)
   NbVanesCmd = new G4UIcmdWithAnInteger("/mu/det/nvanes",this);
   NbVanesCmd->SetGuidance("set the number of vanes of detector");
   NbVanesCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
+
+  fDoStripCmd = new G4UIcmdWithABool("/mu/det/doStrip",this);
+  fDoStripCmd->SetGuidance("segment sensor into strip");
+  fDoStripCmd->SetParameterName("DoStrip",true);
+  fDoStripCmd->SetDefaultValue(true);
+  fDoStripCmd->AvailableForStates(G4State_Idle);
+  
 }
 
 
 
 DetectorMessenger::~DetectorMessenger()
 {
+  delete fDoStripCmd;
   delete UpdateCmd;
   delete NbVanesCmd;
   delete detDir;
@@ -45,8 +53,16 @@ void DetectorMessenger::SetNewValue(G4UIcommand* command,G4String newValue)
    { Detector->UpdateGeometry(); }
 
   if( command == NbVanesCmd )
-    { Detector->SetNumberOfVanes(NbVanesCmd->GetNewIntValue(newValue));
-      Detector->UpdateGeometry();}
+    { if(Detector->SetNumberOfVanes(NbVanesCmd->GetNewIntValue(newValue))){
+	Detector->UpdateGeometry();
+      }
+    }
+
+  if( command == fDoStripCmd )
+    { if(Detector->SetDoStrip(fDoStripCmd->GetNewBoolValue(newValue))){
+	Detector->UpdateGeometry();
+      }
+    }
 }
 
 

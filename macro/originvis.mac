@@ -30,7 +30,8 @@
 /vis/verbose errors
 #
 # Draw geometry:
-/mu/det/nvanes 24
+/mu/det/nvanes 40
+/mu/det/doStrip true
 /vis/drawVolume
 #
 # Specify view angle:

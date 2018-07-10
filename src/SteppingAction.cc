@@ -103,11 +103,11 @@ void SteppingAction::UserSteppingAction(const G4Step* aStep)
      G4TrackVector::const_iterator p = secondary->begin();
      for ( ; p != secondary->end(); ++p) {
        G4ParticleDefinition *particle = (*p)->GetDefinition();
-
        mom = (*p)->GetMomentum();
        TE= (*p)->GetTotalEnergy();
        pol = (*p)->GetPolarization();
        trackID++;
+       if(particle->GetPDGEncoding()==-11) G4cout << "positron E = " << TE << G4endl;
        application->PutDecayValue(TE, pos, mom, pol, Gtime, particle->GetPDGEncoding(), trackID, (*p)->GetParentID());
      }//END for ( ; p != secondary->end(); ++p) {
 

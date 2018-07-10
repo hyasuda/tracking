@@ -35,8 +35,8 @@
 #include "G4SystemOfUnits.hh"
 #include "G4PhysicalConstants.hh"
 
-DetectorConstruction::DetectorConstruction(const G4int nvane)
-  :defaultMaterial(0),fNvane(nvane)
+DetectorConstruction::DetectorConstruction(const G4int nvane,const G4bool doStrip)
+  :defaultMaterial(0),fNvane(nvane),fDoStrip(doStrip)
    //magField(0), mymagField(0)
 {
   // materials
@@ -384,36 +384,38 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   const G4double vvaneH = 490.5*mm;
   const G4double r_vane = 82.*mm+0.5*vvaneW;
   
-  sol_vvane = new G4Box("vvane", 0.5*vvaneW*mm, 0.5*vvaneT*mm, 0.5*vvaneH*mm);
-  log_vvane = new G4LogicalVolume(sol_vvane,
-				  defaultMaterial,
-				  "vvane");
-  
+  sol_vvane = new G4Box("vvane", 0.5*vvaneW, 0.5*vvaneT, 0.5*vvaneH);
+  log_vvaneUpper = new G4LogicalVolume(sol_vvane,
+				       defaultMaterial,
+				       "vvaneUpper");
+  log_vvaneLower = new G4LogicalVolume(sol_vvane,
+				       defaultMaterial,
+				       "vvaneLower");
   for(int ii=0; ii<fNvane; ii++){
     G4double rangle = 2.*pi/(G4double)fNvane*ii*radian;
     G4RotationMatrix *rotvu = new G4RotationMatrix();
     rotvu->rotateZ(-rangle);
-    phys_vvane = new G4PVPlacement(rotvu,
-				   G4ThreeVector(r_vane*cos(rangle),
-						 r_vane*sin(rangle),
-						 0.5*vvaneH),
-				   log_vvane,
-				   "vvane",
-				   logicFrame,
-				   false,
-				   ii);
+    phys_vvaneUpper = new G4PVPlacement(rotvu,
+					G4ThreeVector(r_vane*cos(rangle),
+						      r_vane*sin(rangle),
+						      0.5*vvaneH),
+					log_vvaneUpper,
+					"vvaneUpper",
+					logicFrame,
+					false,
+					ii);
     G4RotationMatrix *rotvd = new G4RotationMatrix();
     rotvd->rotateX(pi*radian);
     rotvd->rotateZ(rangle);
-    phys_vvane = new G4PVPlacement(rotvd,
-				   G4ThreeVector(r_vane*cos(rangle),
-						 r_vane*sin(rangle),
-						 -0.5*vvaneH),
-				   log_vvane,
-				   "vvane",
-				   logicFrame,
-				   false,
-				   ii+fNvane);
+    phys_vvaneLower = new G4PVPlacement(rotvd,
+					G4ThreeVector(r_vane*cos(rangle),
+						      r_vane*sin(rangle),
+						      -0.5*vvaneH),
+					log_vvaneLower,
+					"vvaneLower",
+					logicFrame,
+					false,
+					ii);
   }
 
   
@@ -426,11 +428,11 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   const G4double sensorH = 98.77*mm;
   const G4double deadspace = 0.5*mm;
 
-  G4double subW2 = 17.;
+  G4double subW2 = 17.*mm;
   G4double subH2 = 2.*sensorH + 4.*deadspace; 
   
-  G4double subW = 217.5;
-  G4double subT = 1.6;
+  G4double subW = 217.5*mm;
+  G4double subT = 1.6*mm;
   G4double subH = vvaneH - subH2; 
   
   
@@ -442,31 +444,164 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   const G4double frameT = 4.*mm;
   const G4double frameH = subH2;
 
+  const G4double sensorActiveW = 97.28*mm;
+  const G4double sensorActiveH = 48.39*mm;
+  const G4double splusdActive = 0.5*sensorActiveH + 0.5*deadspace;
 
-  sol_sensor = new G4Box("sensor", 0.5*sensorW, 0.5*sensorT, 0.5*sensorH);
-  log_sensor = new G4LogicalVolume(sol_sensor,
-				   sensorMat,
-				   "sensor");
+  const G4double stripW = 0.19*mm;
+  const G4double stripT = 0.32*mm;
+  const G4double stripH = 48.39*mm;
+
+  G4int ix=0; 
+  G4int iy=0; 
+  G4int iz=0; 
+  G4int iu=0;
   
-  int ix=0; 
-  int iy=0; 
-  int iz=0; 
-  for (int ii=0; ii<8; ii++){
-    if (ii%2==0){ ix = 1;} else { ix = -1;} 
-    if (ii/4==0){ iy = 1;} else { iy = -1;} 
-    if ((ii/2)%2==0){ iz = 1;} else { iz = -1;} 
-    
-    phys_sensor = new G4PVPlacement(0,
-				    G4ThreeVector(xcenter + ix*splusd,
-						  iy*0.5*frameT,
-						  zcenter + iz*splusd), 
-				     log_sensor,
-				     "sensor",
-				     log_vvane,
-				     false,
-				     0);
-  }
+  if(fDoStrip){
+    sol_sensor = new G4Box("silicon", 0.5*sensorActiveW, 0.5*sensorT, 0.5*sensorActiveH);
+    log_sensor = new G4LogicalVolume(sol_sensor,
+				     defaultMaterial,
+				     "silicon");
 
+    sol_strip = new G4Box("sensor", 0.5*stripW, 0.5*stripT, 0.5*stripH);
+    log_strip = new G4LogicalVolume(sol_strip, sensorMat, "sensor");
+    phys_strip = new G4PVReplica("sensor",
+				 log_strip,
+				 log_sensor,
+				 kXAxis,
+				 512,
+				 stripW);
+    G4VSolid *inactiveSensorOut = new G4Box("inactiveSensorOut", 0.5*sensorW, 0.5*sensorT, 0.5*sensorH);
+    G4VSolid *inactiveSensorIn = new G4Box("inactiveSensorIn", 0.5*sensorActiveW, 0.5*sensorT+0.1*mm, 0.5*sensorActiveH);
+    G4VSolid *inactiveSensorTmp = new G4SubtractionSolid("inactiveSensorTmp", inactiveSensorOut, inactiveSensorIn, 0, G4ThreeVector(0., 0., splusdActive));
+    sol_inactiveSensor = new G4SubtractionSolid("inactiveSensor", inactiveSensorTmp, inactiveSensorIn, 0, G4ThreeVector(0., 0., -splusdActive));
+    
+    log_inactiveSensor = new G4LogicalVolume(sol_inactiveSensor,
+					     sensorMat,
+					     "inactiveSensor");
+    G4String physSensorName = "silicon";
+    for (int ii=0; ii<8; ii++){
+      if (ii%2==0){ ix = 1;} else { ix = -1;} 
+      if ((ii/2)%2==0){ iz = 1;} else { iz = -1;} 
+      if ((ii/4)%2==0){ iu = 1;} else { iu = -1;}
+      
+      // R strip
+      phys_sensor = new G4PVPlacement(0,
+				      G4ThreeVector(xcenter + ix*splusd,
+						    0.5*frameT,
+						    zcenter + iz*splusd + iu*splusdActive), 
+				      log_sensor,
+				      physSensorName,
+				      log_vvaneUpper,
+				      false,
+				      0);
+      
+      phys_sensor = new G4PVPlacement(0,
+				      G4ThreeVector(xcenter + ix*splusd,
+						    -0.5*frameT,
+						    zcenter + iz*splusd + iu*splusdActive), 
+				      log_sensor,
+				      physSensorName,
+				      log_vvaneLower,
+				      false,
+				      0);
+      if( iu==1 ){
+	phys_inactiveSensor = new G4PVPlacement(0,
+						G4ThreeVector(xcenter + ix*splusd,
+							      0.5*frameT,
+							      zcenter + iz*splusd),
+						log_inactiveSensor,
+						"inactiveSensor",
+						log_vvaneUpper,
+						false,
+						0);
+	phys_inactiveSensor = new G4PVPlacement(0,
+						G4ThreeVector(xcenter + ix*splusd,
+							      -0.5*frameT,
+							      zcenter + iz*splusd),
+						log_inactiveSensor,
+						"inactiveSensor",
+						log_vvaneLower,
+						false,
+						0);
+      }
+
+      // Z trip
+      G4RotationMatrix *rot = new G4RotationMatrix();
+      rot->rotateY(0.5*pi);
+      phys_sensor = new G4PVPlacement(rot,
+				      G4ThreeVector(xcenter + ix*splusd + iu*splusdActive,
+						    -0.5*frameT,
+						    zcenter + iz*splusd), 
+				      log_sensor,
+				      physSensorName,
+				      log_vvaneUpper,
+				      false,
+				      0);
+      
+      phys_sensor = new G4PVPlacement(rot,
+				      G4ThreeVector(xcenter + ix*splusd + iu*splusdActive,
+						    0.5*frameT,
+						    zcenter + iz*splusd), 
+				      log_sensor,
+				      physSensorName,
+				      log_vvaneLower,
+				      false,
+				      0);
+      
+      if( iu==1 ){
+	phys_inactiveSensor = new G4PVPlacement(rot,
+						G4ThreeVector(xcenter + ix*splusd,
+							      -0.5*frameT,
+							      zcenter + iz*splusd),
+						log_inactiveSensor,
+						"inactiveSensor",
+						log_vvaneUpper,
+						false,
+						0);
+	phys_inactiveSensor = new G4PVPlacement(rot,
+						G4ThreeVector(xcenter + ix*splusd,
+							      0.5*frameT,
+							      zcenter + iz*splusd),
+						log_inactiveSensor,
+						"inactiveSensor",
+						log_vvaneLower,
+						false,
+						0);
+      }
+    }
+  }else{
+    sol_sensor = new G4Box("sensor", 0.5*sensorW, 0.5*sensorT, 0.5*sensorH);
+    log_sensor = new G4LogicalVolume(sol_sensor,
+				     sensorMat,
+				     "sensor");
+    G4String physSensorName = "sensor";
+    for (int ii=0; ii<8; ii++){
+      if (ii%2==0){ ix = 1;} else { ix = -1;}
+      if ((ii/2)%2==0){ iy = 1;} else { iy = -1;}
+      if ((ii/4)%2==0){ iz = 1;} else { iz = -1;} 
+      
+      phys_sensor = new G4PVPlacement(0,
+				      G4ThreeVector(xcenter + ix*splusd,
+						    0.5*iy*frameT,
+						    zcenter + iz*splusd), 
+				      log_sensor,
+				      physSensorName,
+				      log_vvaneUpper,
+				      false,
+				      0);
+      
+      phys_sensor = new G4PVPlacement(0,
+				      G4ThreeVector(xcenter + ix*splusd,
+						    0.5*iy*frameT,
+						    zcenter + iz*splusd), 
+				      log_sensor,
+				      physSensorName,
+				      log_vvaneLower,
+				      false,
+				      0);
+    }
+  }
 
   //
   // -- FPC
@@ -474,82 +609,96 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
   G4double fpcW = 2.*(sensorW + deadspace);
   G4double fpcT = 0.1*mm;
-  G4double fpcH = subH2*mm;
+  G4double fpcH = subH2;
 
   G4double fpc2W = subW;
   G4double fpc2T = 0.125*mm;
   G4double fpc2H = 80.*mm;
 
-  sol_fpc = new G4Box("fpc", 0.5*fpcW*mm, 0.5*fpcT*mm, (0.5*fpcH-1.)*mm); // temporary
+  sol_fpc = new G4Box("fpc", 0.5*fpcW, 0.5*fpcT, (0.5*fpcH-1.*mm)); // temporary
   log_fpc = new G4LogicalVolume(sol_fpc,
 				fpcMat,
 				"fpc");
-  phys_fpc = new G4PVPlacement(0,
-			       G4ThreeVector(xcenter*mm,
-					     0.5*(frameT + sensorT + fpcT)*mm,
-					     (zcenter+1.)*mm), // temporary 
-			       log_fpc,
-			       "fpc",
-			       log_vvane,
-			       false,
-			       0);
-  phys_fpc = new G4PVPlacement(0,
-			       G4ThreeVector(xcenter*mm,
-					     -0.5*(frameT + sensorT + fpcT)*mm,
-					     (zcenter+1.)*mm), // temporary 
-			       log_fpc,
-			       "fpc",
-			       log_vvane,
-			       false,
-			       0);
-  
-  sol_fpc2 = new G4Box("fpc2", 0.5*fpc2W*mm, 0.5*fpc2T*mm, 0.5*fpc2H*mm);
+  sol_fpc2 = new G4Box("fpc2", 0.5*fpc2W, 0.5*fpc2T, 0.5*fpc2H);
   log_fpc2 = new G4LogicalVolume(sol_fpc2,
 				 fpcMat,
 				 "fpc2");
-  phys_fpc2 = new G4PVPlacement(0,
-				G4ThreeVector(0.*mm,
-					      0.5*(frameT + sensorT + fpcT)*mm,
-					      (zcenter+sensorH+deadspace+0.5*fpc2H)*mm), 
-				log_fpc2,
-				"fpc2",
-				log_vvane,
-				false,
-				0);
-  phys_fpc2 = new G4PVPlacement(0,
-				G4ThreeVector(0.*mm,
-					      -0.5*(frameT + sensorT + fpcT)*mm,
-					      (zcenter+sensorH+deadspace+0.5*fpc2H)*mm), 
-				log_fpc2,
-				"fpc2",
-				log_vvane,
-				false,
-				0);
+  for(G4int ii=0; ii<2; ii++){
+    if(ii%2==0){iy=1;}else{iy=-1;}
+
+    phys_fpc = new G4PVPlacement(0,
+				 G4ThreeVector(xcenter,
+					       iy*0.5*(frameT + sensorT + fpcT),
+					       (zcenter+1.*mm)), // temporary 
+				 log_fpc,
+				 "fpc",
+				 log_vvaneUpper,
+				 false,
+				 0);
+    phys_fpc = new G4PVPlacement(0,
+				 G4ThreeVector(xcenter,
+					       iy*0.5*(frameT + sensorT + fpcT),
+					       (zcenter+1.*mm)), // temporary 
+				 log_fpc,
+				 "fpc",
+				 log_vvaneLower,
+				 false,
+				 0);
+    phys_fpc2 = new G4PVPlacement(0,
+				  G4ThreeVector(0.*mm,
+						iy*0.5*(frameT + sensorT + fpcT),
+						(zcenter+sensorH+deadspace+0.5*fpc2H)), 
+				  log_fpc2,
+				  "fpc2",
+				  log_vvaneUpper,
+				  false,
+				  0);
+    phys_fpc2 = new G4PVPlacement(0,
+				  G4ThreeVector(0.*mm,
+						iy*0.5*(frameT + sensorT + fpcT),
+						(zcenter+sensorH+deadspace+0.5*fpc2H)), 
+				  log_fpc2,
+				  "fpc2",
+				  log_vvaneLower,
+				  false,
+				  0);
+  }
+  
 
   //
   // --- Frame
   //
 
-  G4VSolid *out = new G4Box("out", 0.5*frameW*mm, 0.5*frameT*mm, 0.5*frameH*mm);
-  G4VSolid *in1 = new G4Box("in1", 93.8*0.5*mm, (0.5*frameT+0.5)*mm, 98.8*0.5*mm);
-  G4VSolid *in2 = new G4Box("in2", 93.8*0.5*mm, (0.5*frameT+0.5)*mm, 98.8*0.5*mm);
-  G4VSolid *in3 = new G4Box("in3", 93.8*0.5*mm, (0.5*frameT+0.5)*mm, 98.8*0.5*mm);
-  G4VSolid *in4 = new G4Box("in4", 93.8*0.5*mm, (0.5*frameT+0.5)*mm, 98.8*0.5*mm);
-  G4VSolid *tmp_frame1 = new G4SubtractionSolid("frame", out, in1, 0, G4ThreeVector(splusd*mm,0.,splusd*mm));
-  G4VSolid *tmp_frame2 = new G4SubtractionSolid("frame", tmp_frame1, in2, 0, G4ThreeVector(splusd*mm,0.,-splusd*mm));
-  G4VSolid *tmp_frame3 = new G4SubtractionSolid("frame", tmp_frame2, in3, 0, G4ThreeVector(-splusd*mm,0.,splusd*mm));
-  sol_frame = new G4SubtractionSolid("frame", tmp_frame3, in4, 0, G4ThreeVector(-splusd*mm,0.,-splusd*mm));
+  G4VSolid *out = new G4Box("out", 0.5*frameW, 0.5*frameT, 0.5*frameH);
+  G4VSolid *in1 = new G4Box("in1", 93.8*0.5*mm, (0.5*frameT+0.5*mm), 98.8*0.5*mm);
+  G4VSolid *in2 = new G4Box("in2", 93.8*0.5*mm, (0.5*frameT+0.5*mm), 98.8*0.5*mm);
+  G4VSolid *in3 = new G4Box("in3", 93.8*0.5*mm, (0.5*frameT+0.5*mm), 98.8*0.5*mm);
+  G4VSolid *in4 = new G4Box("in4", 93.8*0.5*mm, (0.5*frameT+0.5*mm), 98.8*0.5*mm);
+  G4VSolid *tmp_frame1 = new G4SubtractionSolid("frame", out, in1, 0, G4ThreeVector(splusd,0.,splusd));
+  G4VSolid *tmp_frame2 = new G4SubtractionSolid("frame", tmp_frame1, in2, 0, G4ThreeVector(splusd,0.,-splusd));
+  G4VSolid *tmp_frame3 = new G4SubtractionSolid("frame", tmp_frame2, in3, 0, G4ThreeVector(-splusd,0.,splusd));
+  sol_frame = new G4SubtractionSolid("frame", tmp_frame3, in4, 0, G4ThreeVector(-splusd,0.,-splusd));
   
   log_frame = new G4LogicalVolume(sol_frame,
 				  frameMat, 
 				  "frame");
   phys_frame = new G4PVPlacement(0,
-				 G4ThreeVector(xcenter*mm,
+				 G4ThreeVector(xcenter,
 					       0.*mm,
-					       zcenter*mm),
+					       zcenter),
 				 log_frame,
 				 "frame",
-				 log_vvane,
+				 log_vvaneUpper,
+				 false,
+				 0);
+
+  phys_frame = new G4PVPlacement(0,
+				 G4ThreeVector(xcenter,
+					       0.*mm,
+					       zcenter),
+				 log_frame,
+				 "frame",
+				 log_vvaneLower,
 				 false,
 				 0);
 
@@ -562,35 +711,32 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   const G4double asicT = 0.5*mm;
   const G4double asicH = 15.*mm;
 
-  sol_asic = new G4Box("asic", 0.5*asicW*mm, 0.5*asicT*mm, 0.5*asicH*mm);
+  sol_asic = new G4Box("asic", 0.5*asicW, 0.5*asicT, 0.5*asicH);
   log_asic = new G4LogicalVolume(sol_asic,
 				 subMat, 
 				 "asic");
   
   int jj=0;
-  for (int ii=0; ii<32; ii++){
-    jj = ii;
-    if (ii > 15) jj = ii-16;
+  for (int ii=0; ii<64; ii++){
+    jj = ii%32;
+    if (ii%32 > 15) jj = (ii%32)-16;
+    if((ii/32)%2==0){iy=1;}else{iy=-1;}
     phys_asic = new G4PVPlacement(0,
-				  G4ThreeVector((-0.5*vvaneW + (jj+1)*12.),
-						0.5*(frameT + sensorT + fpcT + asicT),
-						(zcenter+sensorH+deadspace+0.5*fpc2H - 13.*(ii/16))), 
+				  G4ThreeVector((-0.5*vvaneW + (jj+1)*12.*mm),
+						iy*0.5*(frameT + sensorT + fpcT + asicT),
+						(zcenter+sensorH+deadspace+0.5*fpc2H - 13.*((ii/16)%2)*mm)), 
 				  log_asic,
 				  "asic",
-				  log_vvane,
+				  log_vvaneUpper,
 				  false,
 				  0);
-  }
-  for (int ii=0; ii<32; ii++){
-    jj = ii;
-    if (ii > 15) jj = ii-16;
     phys_asic = new G4PVPlacement(0,
-				  G4ThreeVector((-0.5*vvaneW + (jj+1)*12.)*mm,
-						-0.5*(frameT + sensorT + fpcT + asicT)*mm,
-						(zcenter+sensorH+deadspace+0.5*fpc2H - 13.*(ii/16))*mm), 
+				  G4ThreeVector((-0.5*vvaneW + (jj+1)*12.*mm),
+						iy*0.5*(frameT + sensorT + fpcT + asicT),
+						(zcenter+sensorH+deadspace+0.5*fpc2H - 13.*((ii/16)%2)*mm)), 
 				  log_asic,
 				  "asic",
-				  log_vvane,
+				  log_vvaneLower,
 				  false,
 				  0);
   }
@@ -604,77 +750,98 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   log_fpga = new G4LogicalVolume(sol_fpga,
 				 subMat, 
 				 "fpga");
-  phys_fpga = new G4PVPlacement(0,
-				G4ThreeVector(0.*mm,
-					      0.5*(frameT + sensorT + fpcT + fpgaT),
-					      (zcenter+sensorH+deadspace+fpc2H+35.)), 
-				log_fpga,
-				"fpga",
-				log_vvane,
-				false,
-				0);
-  phys_fpga = new G4PVPlacement(0,
-				G4ThreeVector(0.*mm,
-					      -0.5*(frameT + sensorT + fpcT + fpgaT),
-					      (zcenter+sensorH+deadspace+fpc2H+35.)), 
-				log_fpga,
-				"fpga",
-				log_vvane,
-				false,
-				0);
-  G4double sfpW = 10.;
-  G4double sfpT = 10.;
-  G4double sfpH = 70.;
+  for(G4int ii=0; ii<2; ii++){
+    if( ii%2==0 ){ iy=1; }else{ iy=-1; }
+    phys_fpga = new G4PVPlacement(0,
+				  G4ThreeVector(0.*mm,
+						iy*0.5*(frameT + sensorT + fpcT + fpgaT),
+						(zcenter+sensorH+deadspace+fpc2H+35.*mm)), 
+				  log_fpga,
+				  "fpga",
+				  log_vvaneUpper,
+				  false,
+				  0);
+    phys_fpga = new G4PVPlacement(0,
+				  G4ThreeVector(0.*mm,
+						iy*0.5*(frameT + sensorT + fpcT + fpgaT),
+						(zcenter+sensorH+deadspace+fpc2H+35.*mm)), 
+				  log_fpga,
+				  "fpga",
+				  log_vvaneLower,
+				  false,
+				  0);
+  }
+
+  G4double sfpW = 10.*mm;
+  G4double sfpT = 10.*mm;
+  G4double sfpH = 70.*mm;
 
 
-  sol_sfp = new G4Box("sfp", 0.5*sfpW*mm, 0.5*sfpT*mm, 0.5*sfpH*mm);
+  sol_sfp = new G4Box("sfp", 0.5*sfpW, 0.5*sfpT, 0.5*sfpH);
   log_sfp = new G4LogicalVolume(sol_sfp,
 				subMat, 
 				"sfp");
-  phys_sfp = new G4PVPlacement(0,
-			       G4ThreeVector(0.25*subW*mm,
-					     0.5*(frameT + sensorT + fpcT + sfpT)*mm,
-					     (zcenter+sensorH+deadspace+fpc2H+35.)*mm), 
-			       log_sfp,
-			       "sfp",
-			       log_vvane,
-			       false,
-			       0);
-  phys_sfp = new G4PVPlacement(0,
-			       G4ThreeVector(0.25*subW*mm,
-					     -0.5*(frameT + sensorT + fpcT + sfpT)*mm,
-					     (zcenter+sensorH+deadspace+fpc2H+35.)*mm), 
-			       log_sfp,
-			       "sfp",
-			       log_vvane,
-			       false,
-			       0);
+  for(G4int ii=0; ii<2; ii++){
+    if( ii%2==0 ){ iy=1; }else{ iy=-1; }
+    phys_sfp = new G4PVPlacement(0,
+				 G4ThreeVector(0.25*subW,
+					       iy*0.5*(frameT + sensorT + fpcT + sfpT),
+					       (zcenter+sensorH+deadspace+fpc2H+35.*mm)), 
+				 log_sfp,
+				 "sfp",
+				 log_vvaneUpper,
+				 false,
+				 0);
+    phys_sfp = new G4PVPlacement(0,
+				 G4ThreeVector(0.25*subW,
+					       iy*0.5*(frameT + sensorT + fpcT + sfpT),
+					       (zcenter+sensorH+deadspace+fpc2H+35.*mm)), 
+				 log_sfp,
+				 "sfp",
+				 log_vvaneLower,
+				 false,
+				 0);
+  }
   
 
   //
   // --- G10 sustrate
   //
-  sol_sub = new G4Box("sub", subW/2*mm, subT/2*mm, subH/2*mm);
+  sol_sub = new G4Box("sub", 0.5*subW, 0.5*subT, 0.5*subH);
   log_sub = new G4LogicalVolume(sol_sub,
 				subMat,
 				"sub");
   phys_sub = new G4PVPlacement(0,
-			       G4ThreeVector(-0.5*(vvaneW-subW)*mm,0,100*mm),
+			       G4ThreeVector(-0.5*(vvaneW-subW),0,100*mm),
 			       log_sub,
 			       "sub",
-			       log_vvane,
+			       log_vvaneUpper,
+			       false,
+			       0);
+  phys_sub = new G4PVPlacement(0,
+			       G4ThreeVector(-0.5*(vvaneW-subW),0,100*mm),
+			       log_sub,
+			       "sub",
+			       log_vvaneLower,
 			       false,
 			       0);
 
-  sol_sub2 = new G4Box("sub2", subW2/2*mm, subT/2*mm, subH2/2*mm);
+  sol_sub2 = new G4Box("sub2", 0.5*subW2, 0.5*subT, 0.5*subH2);
   log_sub2 = new G4LogicalVolume(sol_sub2,
 				 subMat, // shoud be same as frame
 				 "sub2");
   phys_sub2 = new G4PVPlacement(0,
-				G4ThreeVector((xcenter - deadspace - sensorW - 0.5*subW2)*mm,0,zcenter*mm),
+				G4ThreeVector((xcenter - deadspace - sensorW - 0.5*subW2),0,zcenter),
 				log_sub2,
 				"sub2",
-				log_vvane,
+				log_vvaneUpper,
+				false,
+				0);
+  phys_sub2 = new G4PVPlacement(0,
+				G4ThreeVector((xcenter - deadspace - sensorW - 0.5*subW2),0,zcenter),
+				log_sub2,
+				"sub2",
+				log_vvaneLower,
 				false,
 				0);
 
@@ -683,11 +850,11 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   // --- Center tube
   //
   
-  G4double tube_din = 120.;
-  G4double tube_dout = 130.;
-  G4double tubeH = 440.;
+  G4double tube_din = 120.*mm;
+  G4double tube_dout = 130.*mm;
+  G4double tubeH = 440.*mm;
 
-  sol_tube = new G4Tubs("tube",tube_din/2*mm,tube_dout/2*mm,tubeH/2*mm,
+  sol_tube = new G4Tubs("tube",0.5*tube_din,0.5*tube_dout,0.5*tubeH,
 			0.*deg,360.*deg);
   log_tube = new G4LogicalVolume(sol_tube,
 				 tubeMat,
@@ -746,8 +913,11 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
   BodySD* bodySD = new BodySD();
   G4SDManager::GetSDMpointer()->AddNewDetector(bodySD);
-  log_sensor->SetSensitiveDetector(bodySD);
-
+  if(fDoStrip){
+    log_strip->SetSensitiveDetector(bodySD);
+  }else{
+    log_sensor->SetSensitiveDetector(bodySD);
+  }
   
   G4UserLimits* stepLimit0;
   stepLimit0 = new  G4UserLimits(10*mm);// 1000*mm unpol 100*mm pol
@@ -777,8 +947,15 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4VisAttributes* framecol= new G4VisAttributes(G4Colour(0.2,0.2,0.2,1.));
   G4VisAttributes* windowcol= new G4VisAttributes(G4Colour(0.82,0.41,0.12,1.));//210., 105., 30.
   // log_vvane->SetVisAttributes(vvanecol);
-  log_vvane->SetVisAttributes (G4VisAttributes::Invisible);
-  log_sensor->SetVisAttributes(sensorcol);
+  log_vvaneUpper->SetVisAttributes (G4VisAttributes::Invisible);
+  log_vvaneLower->SetVisAttributes (G4VisAttributes::Invisible);
+  if(fDoStrip){
+    log_sensor->SetVisAttributes(G4VisAttributes::Invisible);
+    log_strip->SetVisAttributes(sensorcol);
+    log_inactiveSensor->SetVisAttributes(sensorcol);
+  }else{
+    log_sensor->SetVisAttributes(sensorcol);
+  }
   log_fpc->SetVisAttributes(fpccol);
   log_fpc2->SetVisAttributes(fpccol);
   log_sub->SetVisAttributes(subcol);
@@ -789,8 +966,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   log_sfp->SetVisAttributes(sfpcol);
   log_frame->SetVisAttributes(framecol);
   log_window->SetVisAttributes(windowcol);
-
-
+  
   //
   //always return the physical World
   //

@@ -17,11 +17,12 @@ class DetectorConstruction : public G4VUserDetectorConstruction
 {
   public:
   
-    DetectorConstruction(const G4int nvane=40);
+  DetectorConstruction(const G4int nvane=40,const G4bool doStrip=true);
    ~DetectorConstruction();
 
   public:
-    void SetNumberOfVanes(G4int nvane){fNvane=nvane;}
+    G4bool SetNumberOfVanes(G4int nvane){if(nvane!=fNvane){fNvane=nvane;return true;}else{return false;}}
+    G4bool SetDoStrip(G4bool doStrip){if(doStrip!=fDoStrip){fDoStrip=doStrip;return true;}else{return false;}}
     G4VPhysicalVolume* Construct();
 
     void UpdateGeometry();
@@ -41,7 +42,8 @@ class DetectorConstruction : public G4VUserDetectorConstruction
 
   G4double           WorldSize;
   G4int              fNvane;
-  
+  G4bool             fDoStrip;
+
   G4Box*             solidWorld;    //pointer to the solid World 
   G4LogicalVolume*   logicWorld;    //pointer to the logical World
   G4VPhysicalVolume* physiWorld;    //pointer to the physical World
@@ -51,13 +53,23 @@ class DetectorConstruction : public G4VUserDetectorConstruction
   G4VPhysicalVolume* physiFrame;    //pointer to the physicalFrame 
   
   G4Box*             sol_vvane;    
-  G4LogicalVolume*   log_vvane;    
-  G4VPhysicalVolume* phys_vvane; 
+  G4LogicalVolume*   log_vvaneUpper;
+  G4LogicalVolume*   log_vvaneLower;
+  G4VPhysicalVolume* phys_vvaneUpper;
+  G4VPhysicalVolume* phys_vvaneLower;
 
   G4Box*             sol_sensor;    
-  G4LogicalVolume*   log_sensor;    
+  G4LogicalVolume*   log_sensor; 
   G4VPhysicalVolume* phys_sensor; 
   
+  G4Box*             sol_strip;
+  G4LogicalVolume*   log_strip;
+  G4VPhysicalVolume* phys_strip;
+
+  G4VSolid*          sol_inactiveSensor;
+  G4LogicalVolume*   log_inactiveSensor;
+  G4VPhysicalVolume* phys_inactiveSensor;
+
   G4Box*             sol_fpc;    
   G4LogicalVolume*   log_fpc;    
   G4VPhysicalVolume* phys_fpc; 

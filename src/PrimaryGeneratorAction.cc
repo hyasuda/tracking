@@ -156,6 +156,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
     }else if(rndmFlag=="repeat"){
       index = nEvent%fBeamX.size();
     }
+    G4cout << "beamIndex = " << index << G4endl;
     application->SetBeamIndex(index);
 
     x0 = fBeamX.at(index);

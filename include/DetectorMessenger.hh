@@ -6,11 +6,11 @@
 
 class DetectorConstruction;
 class G4UIdirectory;
-class G4UIcmdWithAString;
+//class G4UIcmdWithAString;
 class G4UIcmdWithAnInteger;
-class G4UIcmdWithADoubleAndUnit;
+//class G4UIcmdWithADoubleAndUnit;
 class G4UIcmdWithoutParameter;
-
+class G4UIcmdWithABool;
 
 class DetectorMessenger: public G4UImessenger
 {
@@ -32,6 +32,7 @@ class DetectorMessenger: public G4UImessenger
   //G4UIcmdWithADoubleAndUnit* SizeYZCmd;
     G4UIcmdWithAnInteger*      NbVanesCmd;    
     G4UIcmdWithoutParameter*   UpdateCmd;
+    G4UIcmdWithABool*          fDoStripCmd;
 };
 
 #endif

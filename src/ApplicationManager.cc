@@ -27,6 +27,7 @@ ApplicationManager::ApplicationManager()
 
   //thePrevTime = 0.;
   thePrevTime = -1e9*second;
+  theBeamIndex = -1;
 
   gErrorIgnoreLevel = 3000;
 

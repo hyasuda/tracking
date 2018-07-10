@@ -29,6 +29,8 @@
 #include "G4GDMLParser.hh"
 #include "G4TransportationManager.hh"
 
+#include <chrono>
+
 /*
 #ifdef G4UI_USE_QT
 #include "G4UIQt.hh"
@@ -44,6 +46,9 @@ G4int PickBegin;
 
 int main(int argc,char** argv)
 {
+
+  std::chrono::system_clock::time_point  start, end;
+  start = std::chrono::system_clock::now();
 
  DokodemoBango=1; 
   // Choose the Random engine
@@ -133,6 +138,10 @@ int main(int argc,char** argv)
     }
 
   delete runManager;
+
+  end = std::chrono::system_clock::now();
+  double elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
+  std::cout << "elapsed time = " << elapsed << " ms " << std::endl;
 
   return 0;
 }
