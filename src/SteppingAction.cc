@@ -96,7 +96,8 @@ void SteppingAction::UserSteppingAction(const G4Step* aStep)
      pos = track->GetPosition();
      TE= track->GetTotalEnergy();
      
-     application->PutDecayValue(TE, pos, mom, pol, Gtime, track->GetParticleDefinition()->GetPDGEncoding(), trackID, track->GetParentID());
+     //application->PutDecayValue(TE, pos, mom, pol, Gtime, track->GetParticleDefinition()->GetPDGEncoding(), trackID, track->GetParentID());
+     application->PutNtupleValue(track->GetParticleDefinition()->GetPDGEncoding(), TE, aStep->GetPreStepPoint()->GetPosition(), aStep->GetPostStepPoint()->GetPosition(), mom, Gtime, 0, 0, 0, trackID);
 
      //G4TrackVector *secondary =fpSteppingManager->GetfSecondary();
      const G4TrackVector *secondary = fpSteppingManager->GetSecondary();

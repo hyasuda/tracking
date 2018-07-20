@@ -436,12 +436,12 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4double subH = vvaneH - subH2; 
   
   
-  const G4double xcenter = 108.23*mm - 0.5*vvaneW; //sensorW + deadspace + subW2 - 0.5*vvaneW; 
+  const G4double xcenter = 8.96*mm + sensorW + 0.5*deadspace - 0.5*vvaneW; 
   const G4double zcenter = sensorH + deadspace - 0.5*vvaneH;   
   const G4double splusd  = 0.5*sensorW + 0.5*deadspace;
 
   const G4double frameW = subH2;
-  const G4double frameT = 4.*mm;
+  const G4double frameT = 3.*mm;
   const G4double frameH = subH2;
 
   const G4double sensorActiveW = 97.28*mm;

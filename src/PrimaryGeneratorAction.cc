@@ -175,35 +175,34 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
       Emu = sqrt(Pmu*Pmu+mu_mass*mu_mass);
       Kmu = Emu-mu_mass;
     }
-
-    // polarization magnitude
-    //const G4double polMag = 0.5;
-    if( fBeamPol<1. ){
-      G4double rand2 = G4UniformRand();
-      if(rand2<0.5*(1-fBeamPol)){
-	polx0 = -polx0;
-	poly0 = -poly0;
-	polz0 = -polz0;
-      }
-    }
-
-    // spin precession
-    if( fBeamSpinRot=="on" ){
-      const G4double omega = 2.9752/microsecond; 
-      const G4double spentTime = 220.*ns;
-      const G4double phase = spentTime*omega;
-      
-      G4double polx0_temp = polx0;
-      G4double poly0_temp = poly0;
-      polx0 = polx0_temp*cos(phase)-poly0_temp*sin(phase);
-      poly0 = -polx0_temp*sin(phase)+poly0_temp*cos(phase);
-    }
-
   }else if(rndmFlag=="gaus"){
     G4double rand = G4RandGauss::shoot(0.,1.);
     py0 = cos(rand*1e-5);
     pz0 = sin(rand*1e-5);
   }
+
+  // polarization magnitude
+  if( fBeamPol<1. ){
+    G4double rand2 = G4UniformRand();
+    if(rand2<0.5*(1-fBeamPol)){
+      polx0 = -polx0;
+      poly0 = -poly0;
+      polz0 = -polz0;
+    }
+  }
+
+  // spin precession
+  if( fBeamSpinRot=="on" ){
+    const G4double omega = 2.9752/microsecond; 
+    const G4double spentTime = 220.*ns;
+    const G4double phase = spentTime*omega;
+    
+    G4double polx0_temp = polx0;
+    G4double poly0_temp = poly0;
+    polx0 = polx0_temp*cos(phase)-poly0_temp*sin(phase);
+    poly0 = -polx0_temp*sin(phase)+poly0_temp*cos(phase);
+  }
+
 
   particleGun->SetParticleEnergy(Kmu*MeV);//Kinetic energy
 
