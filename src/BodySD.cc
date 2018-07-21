@@ -50,6 +50,10 @@ void BodySD::Initialize(G4HCofThisEvent* /*HCTE*/)
   currentTotalDepE = 0.;
   unsummedDepE = 0.;
   steplengthTotal = 0.;
+  fHitTrackID.clear();
+  for(G4int i=1; i<5; i++){
+    fHitTrackID.insert(i);
+  }
 }
 /////////////////////////////////////
 
@@ -149,11 +153,10 @@ void BodySD::EndOfEvent(G4HCofThisEvent* )
   application->SetTotalEdep(currentTotalDepE);
   application->SetTotalStepLength(steplengthTotal);
 
-  unsummedDepE = 0.;
-  currentTotalDepE = 0.;
-  steplengthTotal = 0.;
-
-  fHitTrackID.clear();
+  //unsummedDepE = 0.;
+  //currentTotalDepE = 0.;
+  //steplengthTotal = 0.;
+  //fHitTrackID.clear();
 
   // make hits and push them to "Hit Coleltion"
   /*

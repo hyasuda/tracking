@@ -5,7 +5,6 @@
 
 #include "Randomize.hh"
 
-//#include "QGSP.hh"
 #include "DetectorConstruction.hh"
 #include "F04PhysicsList.hh"
 #include "PrimaryGeneratorAction.hh"
@@ -30,6 +29,8 @@
 #include "G4GDMLParser.hh"
 #include "G4TransportationManager.hh"
 
+#include <chrono>
+
 /*
 #ifdef G4UI_USE_QT
 #include "G4UIQt.hh"
@@ -46,6 +47,9 @@ G4int PickBegin;
 int main(int argc,char** argv)
 {
 
+  std::chrono::system_clock::time_point  start, end;
+  start = std::chrono::system_clock::now();
+
  DokodemoBango=1; 
   // Choose the Random engine
   CLHEP::HepRandom::setTheEngine(new CLHEP::RanecuEngine);
@@ -56,16 +60,11 @@ int main(int argc,char** argv)
   // Construct the default run manager
   G4RunManager * runManager = new G4RunManager;
 
-  G4int nvane = 24;
-  if(argc>2){
-    nvane = atoi(argv[2]);
-  }
   // Set mandatory initialization classes
-  DetectorConstruction* detector = new DetectorConstruction(nvane);
+  DetectorConstruction* detector = new DetectorConstruction();
   runManager->SetUserInitialization(detector);
 
   //  G4VUserPhysicsList* physics = new QGSP;
-  //G4VUserPhysicsList* physics = new ExN03PhysicsList;
   G4VUserPhysicsList* physics = new F04PhysicsList("QGSP_BERT");//Toshito-san
   runManager->SetUserInitialization(physics);
 
@@ -100,8 +99,8 @@ int main(int argc,char** argv)
       //tyosioka 170421 for GDML
       //
       G4GDMLParser parser;
-      if (argc>=4){
-	parser.Write(argv[3], G4TransportationManager::GetTransportationManager()->
+      if (argc>=3){
+	parser.Write(argv[2], G4TransportationManager::GetTransportationManager()->
 		     GetNavigatorForTracking()->GetWorldVolume()->GetLogicalVolume());
       }
     }
@@ -139,6 +138,10 @@ int main(int argc,char** argv)
     }
 
   delete runManager;
+
+  end = std::chrono::system_clock::now();
+  double elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
+  std::cout << "elapsed time = " << elapsed << " ms " << std::endl;
 
   return 0;
 }
